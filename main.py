@@ -40,7 +40,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from google_search_agent.agent import root_agent
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 # Load Gemini API Key
@@ -84,7 +83,7 @@ async def start_agent_session(user_id, is_audio=False):
     #     prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name="Zubenelgenubi")
     # )
     )
-    
+
     modality = "AUDIO" if is_audio else "TEXT"
     run_config = RunConfig(response_modalities=[modality], speech_config=speech_config)
 
@@ -142,7 +141,7 @@ async def agent_to_client_sse(live_events):
             yield f"data: {json.dumps(message)}\n\n"
             logger.debug(f"[AGENT TO CLIENT]: text/plain: {message}")
 
-            
+
 
 
 #

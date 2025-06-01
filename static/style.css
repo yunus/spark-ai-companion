@@ -1,0 +1,116 @@
+body {
+    background: #181818;
+    color: #f1f1f1;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 20px 0 10px 20px;
+    color: #f1f1f1;
+}
+
+#messages {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #232323;
+    padding: 20px;
+    border-radius: 8px;
+    background: #232323;
+    margin: 20px;
+    font-size: 1rem;
+    color: #e0e0e0;
+}
+
+form {
+    margin: 0 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+label {
+    color: #b0b0b0;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+input[type="text"] {
+    background: #232323;
+    color: #f1f1f1;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+}
+
+input[type="text"]:focus {
+    border: 1.5px solid #4f8cff;
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+}
+
+.button-group button,
+button[type="submit"] {
+    background: #232323;
+    color: #f1f1f1;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: fit-content;
+}
+
+.button-group button .material-icons,
+button[type="submit"] .material-icons {
+    font-size: 20px;
+}
+
+.button-group button:hover,
+button[type="submit"]:hover {
+    background: #333;
+    border: 1.5px solid #4f8cff;
+}
+
+.button-group button.active,
+button[type="submit"]:not(:disabled) {
+    background: #1a73e8;
+    border-color: #1a73e8;
+}
+
+.button-group button.active:hover,
+button[type="submit"]:not(:disabled):hover {
+    background: #1557b0;
+    border-color: #1557b0;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#screenShareVideo {
+    max-width: 100%;
+    margin: 20px;
+    border: 1px solid #232323;
+    border-radius: 8px;
+    background: #111;
+    display: block;
+}
+
+.hidden {
+    display: none;
+}

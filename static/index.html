@@ -2,26 +2,10 @@
 <html>
   <head>
     <title>ADK Streaming Test (Audio)</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="/static/js/app.js" type="module"></script>
-    <style>
-      .hidden {
-        display: none;
-      }
-      #screenShareVideo {
-        max-width: 100%;
-        margin-top: 10px;
-        border: 1px solid #ccc;
-      }
-      #messages {
-        height: 500px;
-        overflow-y: auto;
-        border: 1px solid #ccc;
-        padding: 15px;
-        border-radius: 5px;
-        background-color: #f9f9f9;
-        margin: 10px 0;
-      }
-    </style>
   </head>
 
   <body>
@@ -32,10 +16,21 @@
     <form id="messageForm">
       <label for="message">Message:</label>
       <input type="text" id="message" name="message" />
-      <button type="submit" id="sendButton" disabled>Send</button>
-      <button type="button" id="startAudioButton">Start Audio</button>
-      <button type="button" id="startScreenButton">Start Screen Sharing</button>
-      <button type="button" id="stopScreenButton" class="hidden">Stop Screen Sharing</button>
+      <button type="submit" id="sendButton" disabled>
+        <span class="material-icons">send</span>
+        <span>Send</span>
+      </button>
+      
+      <div class="button-group">
+        <button type="button" id="audioButton">
+          <span class="material-icons">mic</span>
+          <span>Start Audio</span>
+        </button>
+        <button type="button" id="screenButton">
+          <span class="material-icons">screen_share</span>
+          <span>Start Screen Sharing</span>
+        </button>
+      </div>
     </form>
     <video id="screenShareVideo" class="hidden" autoplay playsinline></video>
   </body>

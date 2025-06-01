@@ -169,6 +169,33 @@ let audioRecorderNode;
 let audioRecorderContext;
 let micStream;
 
+// Add inactivity timer variables
+let inactivityTimer = null;
+const INACTIVITY_TIMEOUT = 30000; // 30 seconds in milliseconds
+
+// Function to reset inactivity timer
+function resetInactivityTimer() {
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+  }
+  if (is_audio || is_screen) {
+    inactivityTimer = setTimeout(() => {
+      if (is_audio) {
+        stopAudio();
+        const buttonText = audioButton.querySelector('span:not(.material-icons)');
+        buttonText.textContent = "Start Audio";
+        audioButton.classList.remove('active');
+        is_audio = false;
+        eventSource.close();
+        connectSSE();
+      }
+      if (is_screen) {
+        stopScreenShare();
+      }
+    }, INACTIVITY_TIMEOUT);
+  }
+}
+
 // Import the audio worklets
 import { startAudioPlayerWorklet } from "./audio-player.js";
 import { startAudioRecorderWorklet } from "./audio-recorder.js";
@@ -190,20 +217,58 @@ function startAudio() {
   );
 }
 
+// Stop audio
+function stopAudio() {
+  if (audioPlayerNode) {
+    audioPlayerNode.port.postMessage({ command: "endOfAudio" });
+    audioPlayerNode.disconnect();
+    audioPlayerNode = null;
+  }
+  if (audioRecorderNode) {
+    audioRecorderNode.disconnect();
+    audioRecorderNode = null;
+  }
+  if (audioRecorderContext) {
+    audioRecorderContext.close();
+    audioRecorderContext = null;
+  }
+  if (micStream) {
+    micStream.getTracks().forEach(track => track.stop());
+    micStream = null;
+  }
+}
 
-// Start the audio only when the user clicked the button
-// (due to the gesture requirement for the Web Audio API)
-const startAudioButton = document.getElementById("startAudioButton");
-startAudioButton.addEventListener("click", () => {
-  startAudioButton.disabled = true;
-  startAudio();
-  is_audio = true;
-  eventSource.close(); // close current connection
-  connectSSE(); // reconnect with the audio mode
+// Audio button handling
+const audioButton = document.getElementById("audioButton");
+audioButton.addEventListener("click", () => {
+  const buttonText = audioButton.querySelector('span:not(.material-icons)');
+  if (buttonText.textContent === "Start Audio") {
+    startAudio();
+    is_audio = true;
+    eventSource.close(); // close current connection
+    connectSSE(); // reconnect with the audio mode
+    buttonText.textContent = "Stop Audio";
+    audioButton.classList.add('active');
+    resetInactivityTimer(); // Start inactivity timer
+  } else {
+    stopAudio();
+    is_audio = false;
+    eventSource.close(); // close current connection
+    connectSSE(); // reconnect without audio mode
+    buttonText.textContent = "Start Audio";
+    audioButton.classList.remove('active');
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = null;
+    }
+  }
 });
 
 // Audio recorder handler
 function audioRecorderHandler(pcmData) {
+  // Reset inactivity timer when there's audio input
+  resetInactivityTimer();
+
   // Send the pcm data as base64
   sendMessage({
     mime_type: "audio/pcm",
@@ -231,13 +296,17 @@ function arrayBufferToBase64(buffer) {
 async function startScreenShare() {
   const success = await mediaHandler.startScreenShare();
   if (success) {
-    document.getElementById("startScreenButton").classList.add("hidden");
-    document.getElementById("stopScreenButton").classList.remove("hidden");
+    const buttonText = screenButton.querySelector('span:not(.material-icons)');
+    buttonText.textContent = "Stop Screen Sharing";
     is_screen = true;
-    connectWebsocket(); // reconnect with screen sharing mode
+    eventSource.close(); // close current connection
+    connectSSE(); // reconnect with screen sharing mode
     
     // Start capturing frames
     mediaHandler.startFrameCapture((base64Image) => {
+      // Reset inactivity timer when there's screen sharing activity
+      resetInactivityTimer();
+
       sendMessage({
         mime_type: "image/jpeg",
         data: base64Image
@@ -249,15 +318,27 @@ async function startScreenShare() {
 // Stop screen sharing
 function stopScreenShare() {
   mediaHandler.stopAll();
-  document.getElementById("startScreenButton").classList.remove("hidden");
-  document.getElementById("stopScreenButton").classList.add("hidden");
+  const buttonText = screenButton.querySelector('span:not(.material-icons)');
+  buttonText.textContent = "Start Screen Sharing";
   is_screen = false;
-  connectWebsocket(); // reconnect without screen sharing mode
+  eventSource.close(); // close current connection
+  connectSSE(); // reconnect without screen sharing mode
 }
 
-// Add screen sharing button handlers
-const startScreenButton = document.getElementById("startScreenButton");
-const stopScreenButton = document.getElementById("stopScreenButton");
-
-startScreenButton.addEventListener("click", startScreenShare);
-stopScreenButton.addEventListener("click", stopScreenShare);
+// Screen sharing button handling
+const screenButton = document.getElementById("screenButton");
+screenButton.addEventListener("click", () => {
+  const buttonText = screenButton.querySelector('span:not(.material-icons)');
+  if (buttonText.textContent === "Start Screen Sharing") {
+    startScreenShare();
+    screenButton.classList.add('active');
+    resetInactivityTimer(); // Start inactivity timer
+  } else {
+    stopScreenShare();
+    screenButton.classList.remove('active');
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = null;
+    }
+  }
+});
