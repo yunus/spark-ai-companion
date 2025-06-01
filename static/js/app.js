@@ -73,10 +73,14 @@ function connectSSE() {
     // If it's audio, play it
     if (message_from_server.mime_type == "audio/pcm" && audioPlayerNode) {
       audioPlayerNode.port.postMessage(base64ToArray(message_from_server.data));
+      resetInactivityTimer(); // Reset timer when receiving audio from server
     }
 
     // If it's a text, print it
     if (message_from_server.mime_type == "text/plain") {
+      // Reset timer when receiving text from server
+      resetInactivityTimer();
+
       // add a new message for a new turn
       if (currentMessageId == null) {
         currentMessageId = Math.random().toString(36).substring(7);
@@ -266,9 +270,6 @@ audioButton.addEventListener("click", () => {
 
 // Audio recorder handler
 function audioRecorderHandler(pcmData) {
-  // Reset inactivity timer when there's audio input
-  resetInactivityTimer();
-
   // Send the pcm data as base64
   sendMessage({
     mime_type: "audio/pcm",
@@ -304,8 +305,8 @@ async function startScreenShare() {
     
     // Start capturing frames
     mediaHandler.startFrameCapture((base64Image) => {
-      // Reset inactivity timer when there's screen sharing activity
-      resetInactivityTimer();
+      // Screen sharing is not counted as activity
+      // resetInactivityTimer();
 
       sendMessage({
         mime_type: "image/jpeg",
