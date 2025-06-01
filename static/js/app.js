@@ -6,16 +6,13 @@
 import { MediaHandler } from "./media-handler.js";
 
 /**
- * SSE (Server-Sent Events) handling
+ * WebSocket handling
  */
 
-// Connect the server with SSE
+// Connect the server with a WebSocket connection
 const sessionId = Math.random().toString().substring(10);
-const sse_url =
-  "http://" + window.location.host + "/events/" + sessionId;
-const send_url =
-  "http://" + window.location.host + "/send/" + sessionId;
-let eventSource = null;
+const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
+let websocket = null;
 let is_audio = false;
 let is_screen = false;
 
@@ -28,15 +25,16 @@ let currentMessageId = null;
 // Initialize MediaHandler
 const mediaHandler = new MediaHandler();
 mediaHandler.initialize(document.getElementById("screenShareVideo"));
-// SSE handlers
-function connectSSE() {
-  // Connect to SSE endpoint
-  eventSource = new EventSource(sse_url + "?is_audio=" + is_audio);
+
+// WebSocket handlers
+function connectWebsocket() {
+  // Connect websocket
+  websocket = new WebSocket(ws_url + "?is_audio=" + is_audio);
 
   // Handle connection open
-  eventSource.onopen = function () {
-    // Connection opened messages
-    console.log("SSE connection opened.");
+  websocket.onopen = function () {
+  // Connection opened messages
+    console.log("WebSocket connection opened.");
     document.getElementById("messages").textContent = "Connection opened";
 
     // Enable the Send button
@@ -45,7 +43,7 @@ function connectSSE() {
   };
 
   // Handle incoming messages
-  eventSource.onmessage = function (event) {
+  websocket.onmessage = function (event) {
     // Parse the incoming message
     const message_from_server = JSON.parse(event.data);
     //console.log("[AGENT TO CLIENT] ", message_from_server);
@@ -69,7 +67,7 @@ function connectSSE() {
       }
       return;
     }
-    
+
     // If it's audio, play it
     if (message_from_server.mime_type == "audio/pcm" && audioPlayerNode) {
       audioPlayerNode.port.postMessage(base64ToArray(message_from_server.data));
@@ -100,18 +98,21 @@ function connectSSE() {
   };
 
   // Handle connection close
-  eventSource.onerror = function (event) {
-    console.log("SSE connection error or closed.");
+  websocket.onclose = function () {
+    console.log("WebSocket connection closed.");
     document.getElementById("sendButton").disabled = true;
     document.getElementById("messages").textContent = "Connection closed";
-    eventSource.close();
     setTimeout(function () {
       console.log("Reconnecting...");
-      connectSSE();
+      connectWebsocket();
     }, 5000);
   };
+
+  websocket.onerror = function (e) {
+    console.log("WebSocket error: ", e);
+  };
 }
-connectSSE();
+connectWebsocket();
 
 // Add submit handler to the form
 function addSubmitHandler() {
@@ -133,22 +134,11 @@ function addSubmitHandler() {
   };
 }
 
-// Send a message to the server via HTTP POST
-async function sendMessage(message) {
-  try {
-    const response = await fetch(send_url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message)
-    });
-    
-    if (!response.ok) {
-      console.error('Failed to send message:', response.statusText);
-    }
-  } catch (error) {
-    console.error('Error sending message:', error);
+// Send a message to the server
+function sendMessage(message) {
+  if (websocket && websocket.readyState == WebSocket.OPEN) {
+    const messageJson = JSON.stringify(message);
+    websocket.send(messageJson);
   }
 }
 
@@ -190,8 +180,8 @@ function resetInactivityTimer() {
         buttonText.textContent = "Start Audio";
         audioButton.classList.remove('active');
         is_audio = false;
-        eventSource.close();
-        connectSSE();
+        websocket.close();
+        connectWebsocket();
       }
       if (is_screen) {
         stopScreenShare();
@@ -249,16 +239,16 @@ audioButton.addEventListener("click", () => {
   if (buttonText.textContent === "Start Audio") {
     startAudio();
     is_audio = true;
-    eventSource.close(); // close current connection
-    connectSSE(); // reconnect with the audio mode
+    websocket.close(); // close current connection
+    connectWebsocket(); // reconnect with the audio mode
     buttonText.textContent = "Stop Audio";
     audioButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
   } else {
     stopAudio();
     is_audio = false;
-    eventSource.close(); // close current connection
-    connectSSE(); // reconnect without audio mode
+    websocket.close(); // close current connection
+    connectWebsocket(); // reconnect without audio mode
     buttonText.textContent = "Start Audio";
     audioButton.classList.remove('active');
     if (inactivityTimer) {
@@ -300,9 +290,9 @@ async function startScreenShare() {
     const buttonText = screenButton.querySelector('span:not(.material-icons)');
     buttonText.textContent = "Stop Screen Sharing";
     is_screen = true;
-    eventSource.close(); // close current connection
-    connectSSE(); // reconnect with screen sharing mode
-    
+    websocket.close(); // close current connection
+    connectWebsocket(); // reconnect with screen sharing mode
+
     // Start capturing frames
     mediaHandler.startFrameCapture((base64Image) => {
       // Screen sharing is not counted as activity
@@ -322,8 +312,8 @@ function stopScreenShare() {
   const buttonText = screenButton.querySelector('span:not(.material-icons)');
   buttonText.textContent = "Start Screen Sharing";
   is_screen = false;
-  eventSource.close(); // close current connection
-  connectSSE(); // reconnect without screen sharing mode
+  websocket.close(); // close current connection
+  connectWebsocket(); // reconnect without screen sharing mode
 }
 
 // Screen sharing button handling
