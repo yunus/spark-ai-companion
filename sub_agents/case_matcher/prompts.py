@@ -34,8 +34,9 @@ If all the information is enough, finalize the analysisand provide your recommen
 ## 1. Executors and/or driver are down due to memory issues, which also lead to restarts of executors or the application and hence, longer applications.
 
 When you see that an executor is exited with code 137 or 143, it means that the executor has been killed by YARN or Dataproc memory protection.
-You may check whether executors are being killed from the Spark User Interface, either from the Executors tab or from the Stages tab.
-In both the tabs, there should be an errors columns. If it doesn't exist, user should open it from the top left corner additional options.
+You may check whether executors are being killed from the Spark User Interface, from the Executors tab.
+In the Executors tab, there should be an exec loss reason column. If it doesn't exist, user should enable it from the top left corner, show additional metrics checkbox options.
+After the user enables exec loss reason column, tell the user sort based on that column till the user finds an error message.
 
 ### Solutions:
 There can be many reasons for this. 

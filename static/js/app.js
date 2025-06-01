@@ -198,7 +198,7 @@ import { startAudioRecorderWorklet } from "./audio-recorder.js";
 // Start audio
 function startAudio() {
   // Start audio output
-  if (audioPlayerNode != null) {
+  if (audioPlayerNode == null) {
     startAudioPlayerWorklet().then(([node, ctx]) => {
       audioPlayerNode = node;
       audioPlayerContext = ctx;
