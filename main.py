@@ -53,7 +53,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 APP_NAME = "ADK Streaming example"
 
 
-async def start_agent_session(user_id, is_audio=False):
+async def start_agent_session(user_id, is_audio=True):
     """Starts an agent session"""
 
     # Create a Runner
@@ -168,7 +168,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
 
         # Start agent session
         user_id_str = str(user_id)
-        live_events, live_request_queue = await start_agent_session(user_id_str, is_audio == "true")
+        live_events, live_request_queue = await start_agent_session(user_id_str, True)
 
         # Start tasks
         agent_to_client_task = asyncio.create_task(agent_to_client_messaging(websocket, live_events))

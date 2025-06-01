@@ -27,8 +27,8 @@ from google.genai import types
 
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import load_artifacts, google_search
-from sub_agents.code_analyzer import code_analyzer 
+from google.adk.tools import google_search, agent_tool
+from sub_agents.case_matcher import case_matcher
 from sub_agents.spark_ui_analyzer import ui_analyzer 
 
 from . import prompts
@@ -51,9 +51,9 @@ host_agent = Agent(
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
     global_instruction=prompts.GLOBAL_INSTRUCTION,
-    sub_agents=[code_analyzer.code_analyzer_agent, ui_analyzer.spark_ui_agent],
+    sub_agents=[ui_analyzer.spark_ui_agent],
     #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
-    tools=[google_search],
+    tools=[google_search, agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
 )
 logger.info(f"ADK Host Agent '{host_agent.name}' created with model '{os.getenv("ROOT_AGENT_MODEL")}'.")
    

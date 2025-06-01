@@ -13,7 +13,7 @@ import { MediaHandler } from "./media-handler.js";
 const sessionId = Math.random().toString().substring(10);
 const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
 let websocket = null;
-let is_audio = false;
+let is_audio = true;
 let is_screen = false;
 
 // Get DOM elements
@@ -165,7 +165,7 @@ let micStream;
 
 // Add inactivity timer variables
 let inactivityTimer = null;
-const INACTIVITY_TIMEOUT = 30000; // 30 seconds in milliseconds
+const INACTIVITY_TIMEOUT = 60000; // 60 seconds in milliseconds
 
 // Function to reset inactivity timer
 function resetInactivityTimer() {
@@ -174,14 +174,15 @@ function resetInactivityTimer() {
   }
   if (is_audio || is_screen) {
     inactivityTimer = setTimeout(() => {
+      console.log("Inactivity timeout!!");
       if (is_audio) {
         stopAudio();
         const buttonText = audioButton.querySelector('span:not(.material-icons)');
         buttonText.textContent = "Start Audio";
         audioButton.classList.remove('active');
         is_audio = false;
-        websocket.close();
-        connectWebsocket();
+        // websocket.close();
+        // connectWebsocket();
       }
       if (is_screen) {
         stopScreenShare();
@@ -197,10 +198,12 @@ import { startAudioRecorderWorklet } from "./audio-recorder.js";
 // Start audio
 function startAudio() {
   // Start audio output
-  startAudioPlayerWorklet().then(([node, ctx]) => {
-    audioPlayerNode = node;
-    audioPlayerContext = ctx;
-  });
+  if (audioPlayerNode != null) {
+    startAudioPlayerWorklet().then(([node, ctx]) => {
+      audioPlayerNode = node;
+      audioPlayerContext = ctx;
+    });
+  }
   // Start audio input
   startAudioRecorderWorklet(audioRecorderHandler).then(
     ([node, ctx, stream]) => {
@@ -213,11 +216,12 @@ function startAudio() {
 
 // Stop audio
 function stopAudio() {
-  if (audioPlayerNode) {
-    audioPlayerNode.port.postMessage({ command: "endOfAudio" });
-    audioPlayerNode.disconnect();
-    audioPlayerNode = null;
-  }
+  // player should continue to play the audio. Stop audio is recorder only.
+  // if (audioPlayerNode) {
+  //   audioPlayerNode.port.postMessage({ command: "endOfAudio" });
+  //   audioPlayerNode.disconnect();
+  //   audioPlayerNode = null;
+  // }
   if (audioRecorderNode) {
     audioRecorderNode.disconnect();
     audioRecorderNode = null;
@@ -239,16 +243,16 @@ audioButton.addEventListener("click", () => {
   if (buttonText.textContent === "Start Audio") {
     startAudio();
     is_audio = true;
-    websocket.close(); // close current connection
-    connectWebsocket(); // reconnect with the audio mode
+    // websocket.close(); // close current connection
+    // connectWebsocket(); // reconnect with the audio mode
     buttonText.textContent = "Stop Audio";
     audioButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
   } else {
     stopAudio();
     is_audio = false;
-    websocket.close(); // close current connection
-    connectWebsocket(); // reconnect without audio mode
+    // websocket.close(); // close current connection
+    // connectWebsocket(); // reconnect without audio mode
     buttonText.textContent = "Start Audio";
     audioButton.classList.remove('active');
     if (inactivityTimer) {
@@ -290,8 +294,8 @@ async function startScreenShare() {
     const buttonText = screenButton.querySelector('span:not(.material-icons)');
     buttonText.textContent = "Stop Screen Sharing";
     is_screen = true;
-    websocket.close(); // close current connection
-    connectWebsocket(); // reconnect with screen sharing mode
+    // websocket.close(); // close current connection
+    // connectWebsocket(); // reconnect with screen sharing mode
 
     // Start capturing frames
     mediaHandler.startFrameCapture((base64Image) => {
@@ -312,8 +316,8 @@ function stopScreenShare() {
   const buttonText = screenButton.querySelector('span:not(.material-icons)');
   buttonText.textContent = "Start Screen Sharing";
   is_screen = false;
-  websocket.close(); // close current connection
-  connectWebsocket(); // reconnect without screen sharing mode
+  // websocket.close(); // close current connection
+  // connectWebsocket(); // reconnect without screen sharing mode
 }
 
 // Screen sharing button handling
