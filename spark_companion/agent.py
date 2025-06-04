@@ -45,7 +45,7 @@ print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
 
 
 logger.info(f"creating the host agent.")
-host_agent = Agent(
+root_agent = Agent(
     name="AiCompanionHostAgent",
     model=os.getenv("ROOT_AGENT_MODEL"), # type: ignore
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
@@ -55,5 +55,4 @@ host_agent = Agent(
     #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[google_search, agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
 )
-logger.info(f"ADK Host Agent '{host_agent.name}' created with model '{os.getenv("ROOT_AGENT_MODEL")}'.")
-   
+logger.info(f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv("ROOT_AGENT_MODEL")}'.")

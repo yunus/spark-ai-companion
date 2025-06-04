@@ -34,7 +34,7 @@ from google.adk.agents.run_config import RunConfig
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types as genai_types
 
-from spark_companion.agent import host_agent
+from spark_companion.agent import root_agent
 
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
@@ -59,7 +59,7 @@ async def start_agent_session(user_id, is_audio=True):
     # Create a Runner
     runner = InMemoryRunner(
         app_name=APP_NAME,
-        agent=host_agent,
+        agent=root_agent,
     )
 
     # Create a Session
