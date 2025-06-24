@@ -13,7 +13,7 @@ import { MediaHandler } from "./media-handler.js";
 const sessionId = Math.random().toString().substring(10);
 const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
 let websocket = null;
-let is_audio = true;
+let is_audio = false;
 let is_screen = false;
 
 // Get DOM elements
@@ -82,7 +82,7 @@ function connectWebsocket() {
       // add a new message for a new turn
       if (currentMessageId == null) {
         currentMessageId = Math.random().toString(36).substring(7);
-        const message = document.createElement("p");
+        const message = document.createElement("div");
         message.id = currentMessageId;
         // Append the message element to the messagesDiv
         messagesDiv.appendChild(message);
@@ -90,7 +90,11 @@ function connectWebsocket() {
 
       // Add message text to the existing message element
       const message = document.getElementById(currentMessageId);
-      message.textContent += message_from_server.data;
+      // Append new data to our raw text store
+      const rawText = (message.dataset.rawText || "") + message_from_server.data;
+      message.dataset.rawText = rawText;
+      // Render the accumulated markdown text into the message element
+      message.innerHTML = marked.parse(rawText);
 
       // Scroll down to the bottom of the messagesDiv
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
