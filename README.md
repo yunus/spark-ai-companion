@@ -10,7 +10,11 @@ pip install -r requirements.txt
 ```
 
 Create API key from AI studio and set it inside `.env` file
+
+
 ```sh
 # Runt the code:
 uvicorn main:app --reload
+
+# navigate in your browser to localhost:8000
 ```
