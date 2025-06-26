@@ -13,7 +13,7 @@ import { MediaHandler } from "./media-handler.js";
 const sessionId = Math.random().toString().substring(10);
 const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
 let websocket = null;
-let is_audio = false;
+let is_audio = true;
 let is_screen = false;
 
 // Get DOM elements

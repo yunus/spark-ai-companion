@@ -51,8 +51,8 @@ root_agent = Agent(
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
     global_instruction=prompts.GLOBAL_INSTRUCTION,
-    sub_agents=[ui_analyzer.spark_ui_agent],
+    #sub_agents=[ui_analyzer.spark_ui_agent],
     #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
-    tools=[google_search, agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
+    tools=[agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
 )
 logger.info(f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv("ROOT_AGENT_MODEL")}'.")

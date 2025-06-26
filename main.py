@@ -50,10 +50,10 @@ logger = logging.getLogger(__name__)
 # Disable uvicorn access logs
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
-APP_NAME = "ADK Streaming example"
+APP_NAME = "AI Companion"
 
 
-async def start_agent_session(user_id, is_audio=True):
+async def start_agent_session(user_id: str, is_audio=True):
     """Starts an agent session"""
 
     # Create a Runner
@@ -61,6 +61,7 @@ async def start_agent_session(user_id, is_audio=True):
         app_name=APP_NAME,
         agent=root_agent,
     )
+    logger.info(f"The model of the root agent is {root_agent.model}")
 
     # Create a Session
     session = await runner.session_service.create_session(
@@ -167,9 +168,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
         logger.info(f"Client #{user_id} connected, audio mode: {is_audio}")
 
         # Start agent session
-        user_id_str = str(user_id)
-        live_events, live_request_queue = await start_agent_session(user_id_str, True)
-
+        live_events, live_request_queue = await start_agent_session(str(user_id), is_audio.lower() == "true")
         # Start tasks
         agent_to_client_task = asyncio.create_task(agent_to_client_messaging(websocket, live_events))
         client_to_agent_task = asyncio.create_task(client_to_agent_messaging(websocket, live_request_queue))
@@ -177,9 +176,16 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
         # Wait until the websocket is disconnected or an error occurs
         tasks = [agent_to_client_task, client_to_agent_task]
         try:
-            await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+            done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+            logger.info(f"Client await for #{user_id} finished")
+            # Check for exceptions in the completed tasks and re-raise them.
+            # This makes the error handling explicit.
+            for task in done:
+                if task.exception():
+                    task.result()  # This will raise the exception from the task
+            logger.info(f"Client await for #{user_id} finished without task exceptions.")
         except Exception as e:
-            logger.error(f"Error in websocket connection: {e}")
+            logger.exception(f"A websocket communication task failed: {e}")
         finally:
             # Cancel all tasks
             for task in tasks:

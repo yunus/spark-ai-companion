@@ -17,7 +17,7 @@ CASE_MATCHER_PROMPT = """
 You are an expert in Apache Spark performance and configuration analysis on Google Cloud Dataproc. When a developer asks you to solve a particular problem,
 you will match the problem with the existing cases given below. And then provide a list of actions to collect information like checking spark and google cloud interfaces. 
 If the developer has already provided some analysis or extra information, use that to determine whether you need more or not.
-If all the information is enough, finalize the analysisand provide your recommendations.
+If all the information is enough, finalize the analysis and provide your recommendations.
 
 
 ## Workflow:
@@ -26,8 +26,6 @@ If all the information is enough, finalize the analysisand provide your recommen
   3. With the given information, can you make a conclusion? If yes, provide the conclusion and return the control back to the root agent.
   4. if the given information is not enough, provide a list of actions to collect more information. 
   5. If you can't make a decision, use **google_search** tool to search the internet for more information.
-
-
 
 
 # Cases:
@@ -134,6 +132,18 @@ Note that in a n2-standard-8 VM with 32 GB memory, all the background services l
 The remaining is left for your jobs. If you are not using these backend services, you can disable them via dataproc:dataproc.components.deactivate="mysql hive .." cluster property.
 
 
+## 5. User can't find logs and spark user interface of Dataproc
+
+Navigate the user in Datproc user interfaces. Logs are always available in Google Cloud logging but Spark driver outputs are available in the main jobs user interface.
+It is the same for both batch and dataproc cluster jobs.
+
+It the user looks for executor logs, navigate them to google cloud logging. The filters should be like:
+Resource: Cloud Dataproc Job
+Log name: dataproc.job.yarn.container
+
+Driver logs are available in the main job user interface, but also available in cloud logging with the following filters:
+Resource: Cloud Dataproc Job
+Log name: dataproc.job.driver
 
 
 
