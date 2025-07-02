@@ -88,17 +88,17 @@ resource "google_dataproc_cluster" "spark-cluster" {
 
   cluster_config {
 
-    autoscaling_config {
-      policy_uri = google_dataproc_autoscaling_policy.asp.name
-    }
+    # autoscaling_config {
+    #   policy_uri = google_dataproc_autoscaling_policy.asp.name
+    # }
 
-    lifecycle_config {
-      idle_delete_ttl = "1800s" # after 15 minute of idle time, the cluster is deleted
-    }
+    # lifecycle_config {
+    #   idle_delete_ttl = "1800s" # after 15 minute of idle time, the cluster is deleted
+    # }
 
     master_config {
       num_instances = 1
-      machine_type  = "n2-standard-4"
+      machine_type  = "n2-standard-8"
       disk_config {
         boot_disk_type    = "pd-balanced"
         boot_disk_size_gb = 500
@@ -107,41 +107,41 @@ resource "google_dataproc_cluster" "spark-cluster" {
       }
     }
 
-    worker_config {
-      num_instances = 2
-      machine_type  = "n2d-standard-8"
-      disk_config {
-        boot_disk_size_gb = 500
-        boot_disk_type    = "pd-balanced"
-        # num_local_ssds    = 2
-      }
-    }
+    # worker_config {
+    #   num_instances = 2
+    #   machine_type  = "n2d-standard-4"
+    #   disk_config {
+    #     boot_disk_size_gb = 500
+    #     boot_disk_type    = "pd-balanced"
+    #     # num_local_ssds    = 2
+    #   }
+    # }
 
-    preemptible_worker_config {
-      num_instances  = 0
-      preemptibility = "SPOT"
+    # preemptible_worker_config {
+    #   num_instances  = 0
+    #   preemptibility = "SPOT"
 
-      disk_config {
-        boot_disk_type    = "pd-balanced"
-        boot_disk_size_gb = 500
-        # num_local_ssds    = 2
-      }
-      # instance_flexibility_policy {
-      #   instance_selection_list {
-      #     machine_types = ["n2-standard-4","n4-standard-4"]
-      #     rank          = 1
-      #   }
-      #   # instance_selection_list {
-      #   #   machine_types = ["n2-standard-4"]
-      #   #   rank          = 2
-      #   # }
-      # }
-    }
+    #   disk_config {
+    #     boot_disk_type    = "pd-balanced"
+    #     boot_disk_size_gb = 500
+    #     # num_local_ssds    = 2
+    #   }
+    #   # instance_flexibility_policy {
+    #   #   instance_selection_list {
+    #   #     machine_types = ["n2-standard-4","n4-standard-4"]
+    #   #     rank          = 1
+    #   #   }
+    #   #   # instance_selection_list {
+    #   #   #   machine_types = ["n2-standard-4"]
+    #   #   #   rank          = 2
+    #   #   # }
+    #   # }
+    # }
 
 
     # Override or set some custom properties
     software_config {
-      image_version = "2.2.44-ubuntu22"
+      image_version = "2.2-ubuntu22"
       override_properties = {
         "dataproc:dataproc.logging.stackdriver.enable"                    = "true",
         "dataproc:dataproc.logging.stackdriver.job.driver.enable"         = "true",
@@ -162,6 +162,7 @@ resource "google_dataproc_cluster" "spark-cluster" {
         #"dataproc:dataproc.scheduler.max-concurrent-jobs"                 = "1"
         "dataproc:dataproc.components.deactivate" = "mysql hive-metastore hive hive-server2 "
         #"core:fs.defaultFS"                                              = "gs://${module.gcs_buckets.buckets_map["staging"].id}/corefs"
+        "dataproc:dataproc.allow.zero.workers" = "true"
       }
       optional_components = ["JUPYTER", "DOCKER"]
     }
