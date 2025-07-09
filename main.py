@@ -22,11 +22,7 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
-from google.genai.types import (
-    Part,
-    Content,
-    Blob,
-)
+from google.genai.types import (Part, Content, Blob, Modality)
 
 from google.adk.runners import InMemoryRunner
 from google.adk.agents import LiveRequestQueue
@@ -49,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 # Disable uvicorn access logs
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("google_adk").setLevel(logging.WARNING)
 
 APP_NAME = "AI Companion"
 
@@ -72,8 +69,15 @@ async def start_agent_session(user_id: str, is_audio=True):
     # Set response modality
     speech_config = genai_types.SpeechConfig(language_code="en-US")
 
-    modality = "AUDIO" if is_audio else "TEXT"
-    run_config = RunConfig(response_modalities=[modality], speech_config=speech_config)
+    modality = Modality.AUDIO if is_audio else Modality.TEXT
+    run_config = RunConfig(
+        response_modalities=[modality],
+        speech_config=speech_config,
+        output_audio_transcription=genai_types.AudioTranscriptionConfig(
+        ),  # with this, audio responses are transcriped to text additionally.
+        #proactivity=genai_types.ProactivityConfig(proactive_audio=True), -> supported with native audio model. This enables model to ignore messages that are not directed to it.
+        # enable_affective_dialog=True, # -> responds to emotional expressions for more nuanced conversations. native-dialog model only
+    )
 
     # Create a LiveRequestQueue for this session
     live_request_queue = LiveRequestQueue()
