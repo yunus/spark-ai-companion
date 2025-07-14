@@ -23,6 +23,7 @@ export class MediaHandler {
     this.frameCapture = null;
     this.frameCallback = null;
     this.usingFrontCamera = true;
+    this.previousFrame = null;
   }
 
   initialize(videoElement) {
@@ -106,23 +107,65 @@ export class MediaHandler {
 
   startFrameCapture(onFrame) {
     this.frameCallback = onFrame;
+
     const captureFrame = () => {
-      if (!this.currentStream || !this.videoElement) return;
-      
+      if (!this.currentStream || !this.videoElement || this.videoElement.videoWidth === 0) return;
+
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       canvas.width = this.videoElement.videoWidth;
       canvas.height = this.videoElement.videoHeight;
-      
+
       context.drawImage(this.videoElement, 0, 0, canvas.width, canvas.height);
-      
+
+      const currentHash = this.calculatepHash(canvas);
+
+      if (this.previousFrame) {
+        const distance = this.hammingDistance(this.previousFrame, currentHash);
+        if (distance <= 1) { // Threshold of 1 is a good starting point
+          //console.log(`Hamming distance (${distance}) <= 1, not sending frame.`);
+          return;
+        } else {
+          console.log(`Hamming distance (${distance}) > 1, sending frame.`);
+        }
+      }
+
+      this.previousFrame = currentHash;
+
       // Convert to JPEG and base64 encode
       const base64Image = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
       this.frameCallback(base64Image);
     };
 
-    // Capture frames at 1fps
     this.frameCapture = setInterval(captureFrame, 1000);
+  }
+
+  calculatepHash(sourceCanvas) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 8;
+    canvas.height = 8;
+    context.drawImage(sourceCanvas, 0, 0, 8, 8);
+    const imageData = context.getImageData(0, 0, 8, 8);
+    const grayscale = [];
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const r = imageData.data[i];
+      const g = imageData.data[i + 1];
+      const b = imageData.data[i + 2];
+      grayscale.push(0.299 * r + 0.587 * g + 0.114 * b);
+    }
+    const avg = grayscale.reduce((a, b) => a + b) / grayscale.length;
+    return grayscale.map(p => p > avg ? '1' : '0').join('');
+  }
+
+  hammingDistance(hash1, hash2) {
+    let distance = 0;
+    for (let i = 0; i < hash1.length; i++) {
+      if (hash1[i] !== hash2[i]) {
+        distance++;
+      }
+    }
+    return distance;
   }
 
   stopFrameCapture() {
