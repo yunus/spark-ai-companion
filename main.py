@@ -22,10 +22,12 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
+import agentops
+
 from google.genai.types import (Part, Content, Blob, Modality)
 
 from google.adk.runners import InMemoryRunner
-from google.adk.agents import LiveRequestQueue
+from google.adk.agents.live_request_queue import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types as genai_types
@@ -35,17 +37,26 @@ from spark_companion.agent import root_agent
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 # Load Gemini API Key
 load_dotenv()
 # Configure logging
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"),)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+
 logger = logging.getLogger(__name__)
 
 # Disable uvicorn access logs
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-logging.getLogger("google_adk").setLevel(logging.WARNING)
+logging.getLogger("google_adk").setLevel(logging.INFO)
+
+# agentops.init(
+#     api_key=os.getenv("AGENTOPS_API_KEY"),  # Your AgentOps API Key
+#     trace_name="ai-companion-trace"  # Optional: A name for your trace
+#     # auto_start_session=True is the default.
+#     # Set to False if you want to manually control session start/end.
+# )
 
 APP_NAME = "AI Companion"
 
@@ -151,7 +162,28 @@ async def client_to_agent_messaging(websocket, live_request_queue):
             raise ValueError(f"Mime type not supported: {mime_type}")
 
 
-app = FastAPI()
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for the application."""
+    # Startup
+    yield
+    # Shutdown
+    logger.info("Application is shutting down...")
+    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+
+    [task.cancel() for task in tasks]
+
+    logger.info(f"Cancelling {len(tasks)} tasks")
+    try:
+        await asyncio.gather(*tasks, return_exceptions=True)
+    except asyncio.CancelledError:
+        logger.info("Shutdown tasks cancelled.")
+
+
+app = FastAPI(lifespan=lifespan)
 
 STATIC_DIR = Path("static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
