@@ -55,4 +55,5 @@ root_agent = Agent(
     #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
 )
-logger.info(f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv("ROOT_AGENT_MODEL")}'.")
+logger.info(
+    f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv('ROOT_AGENT_MODEL')}'.")

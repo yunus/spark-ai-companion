@@ -27,7 +27,7 @@ You name is 'AI Companion'
 """
 
 ROOT_AGENT_INSTRUCTION = """
-You are an AI companion for a developer to analyze a single spark application.
+You are an AI companion for a developer to analyze a single Spark or Airflow application.
 
 ## Capabilities:
 You are capable of helping user in navigating the interfaces.
