@@ -14,7 +14,7 @@
 """Code analyzer agent."""
 import os
 from google.adk.agents import Agent
-from google.adk.tools import google_search
+from google.adk.tools import VertexAiSearchTool
 from .prompts import CASE_MATCHER_PROMPT
 import logging
 
@@ -30,10 +30,15 @@ print(f"CASE_MATCHER_AGENT_MODEL: {os.getenv('CASE_MATCHER_AGENT_MODEL')}")
 
 DEFAULT_MODEL = "gemini-2.5-flash-exp"  # Default model to use if env var is not set
 
+# Tool Instantiation
+# You MUST provide your datastore ID here.
+vertex_search_tool = VertexAiSearchTool(data_store_id=os.getenv("VERTEX_AI_SEARCH_DATASTORE"))
+# --- Agent Definition ---
+
 case_matcher_agent = Agent(
     model=os.getenv("CASE_MATCHER_AGENT_MODEL", DEFAULT_MODEL),
     name="problem_analyzer_agent",
     description=
     "Based on the developer's problem statement and facts on the system, match the problem with the existing cases and provide a list of actions to collect more information. Finally, provides the conclusion and return the control back to the root agent.",
     instruction=CASE_MATCHER_PROMPT,
-    tools=[google_search])
+    tools=[vertex_search_tool])

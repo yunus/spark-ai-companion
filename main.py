@@ -35,6 +35,7 @@ from google.genai import types as genai_types
 from spark_companion.agent import root_agent
 
 from fastapi import FastAPI, WebSocket
+from starlette.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
@@ -105,85 +106,93 @@ async def start_agent_session(user_id: str, is_audio=True):
 async def agent_to_client_messaging(websocket, live_events):
     """Agent to client communication"""
     while True:
-        async for event in live_events:
-            # If the turn complete or interrupted, send it
-            if event.turn_complete or event.interrupted:
-                message = {
-                    "turn_complete": event.turn_complete,
-                    "interrupted": event.interrupted,
-                }
-                await websocket.send_text(json.dumps(message))
-                logger.info(f"[AGENT TO CLIENT]: {message}")
-                continue
-
-            # Read the Content and its first Part
-            part: Part = (event.content and event.content.parts and event.content.parts[0])
-            if not part:
-                continue
-
-            # If it's audio, send Base64 encoded audio data
-            is_audio = part.inline_data and part.inline_data.mime_type.startswith("audio/pcm")  # type: ignore
-            if is_audio:
-                audio_data = part.inline_data and part.inline_data.data
-                if audio_data:
-                    message = {"mime_type": "audio/pcm", "data": base64.b64encode(audio_data).decode("ascii")}
+        try:
+            async for event in live_events:
+                # If the turn complete or interrupted, send it
+                if event.turn_complete or event.interrupted:
+                    message = {
+                        "turn_complete": event.turn_complete,
+                        "interrupted": event.interrupted,
+                    }
                     await websocket.send_text(json.dumps(message))
-                    logger.debug(f"[AGENT TO CLIENT]: audio/pcm: {len(audio_data)} bytes.")
+                    logger.info(f"[AGENT TO CLIENT]: {message}")
                     continue
 
-            # If it's text and a partial text, send it
-            if part.text and event.partial:
-                message = {"mime_type": "text/plain", "data": part.text}
-                await websocket.send_text(json.dumps(message))
-                logger.debug(f"[AGENT TO CLIENT]: text/plain: {message}")
+                # Read the Content and its first Part
+                part: Part = (event.content and event.content.parts and event.content.parts[0])
+                if not part:
+                    continue
+
+                # If it's audio, send Base64 encoded audio data
+                is_audio = part.inline_data and part.inline_data.mime_type.startswith("audio/pcm")  # type: ignore
+                if is_audio:
+                    audio_data = part.inline_data and part.inline_data.data
+                    if audio_data:
+                        message = {"mime_type": "audio/pcm", "data": base64.b64encode(audio_data).decode("ascii")}
+                        await websocket.send_text(json.dumps(message))
+                        logger.debug(f"[AGENT TO CLIENT]: audio/pcm: {len(audio_data)} bytes.")
+                        continue
+
+                # If it's text and a partial text, send it
+                if part.text and event.partial:
+                    message = {"mime_type": "text/plain", "data": part.text}
+                    await websocket.send_text(json.dumps(message))
+                    logger.debug(f"[AGENT TO CLIENT]: text/plain: {message}")
+        except WebSocketDisconnect:
+            logger.info("Agent disconnected from client messaging.")
+            break
 
 
 async def client_to_agent_messaging(websocket, live_request_queue):
     """Client to agent communication"""
     while True:
-        # Decode JSON message
-        message_json = await websocket.receive_text()
-        message = json.loads(message_json)
-        mime_type = message["mime_type"]
-        data = message["data"]
+        try:
+            # Decode JSON message
+            message_json = await websocket.receive_text()
+            message = json.loads(message_json)
+            mime_type = message["mime_type"]
+            data = message["data"]
 
-        # Send the message to the agent
-        if mime_type == "text/plain":
-            # Send a text message
-            content = Content(role="user", parts=[Part.from_text(text=data)])
-            live_request_queue.send_content(content=content)
-            logger.debug(f"[CLIENT TO AGENT]: {data}")
-        elif mime_type == "audio/pcm" or mime_type == "image/jpeg":
-            # Send an audio or image data
-            decoded_data = base64.b64decode(data)
-            live_request_queue.send_realtime(Blob(data=decoded_data, mime_type=mime_type))
-            logger.debug(f"[CLIENT TO AGENT]: {mime_type}: {len(decoded_data)} bytes")
-        else:
-            raise ValueError(f"Mime type not supported: {mime_type}")
+            # Send the message to the agent
+            if mime_type == "text/plain":
+                # Send a text message
+                content = Content(role="user", parts=[Part.from_text(text=data)])
+                live_request_queue.send_content(content=content)
+                logger.debug(f"[CLIENT TO AGENT]: {data}")
+            elif mime_type == "audio/pcm" or mime_type == "image/jpeg":
+                # Send an audio or image data
+                decoded_data = base64.b64decode(data)
+                live_request_queue.send_realtime(Blob(data=decoded_data, mime_type=mime_type))
+                logger.debug(f"[CLIENT TO AGENT]: {mime_type}: {len(decoded_data)} bytes")
+            else:
+                raise ValueError(f"Mime type not supported: {mime_type}")
+        except WebSocketDisconnect:
+            logger.info("Client disconnected from agent messaging.")
+            break
 
 
 from contextlib import asynccontextmanager
 
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     """Lifespan context manager for the application."""
+#     # Startup
+#     yield
+#     # Shutdown
+#     logger.info("Application is shutting down...")
+#     tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager for the application."""
-    # Startup
-    yield
-    # Shutdown
-    logger.info("Application is shutting down...")
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
+#     for task in tasks:
+#         if not task.done():
+#             task.cancel()
 
-    [task.cancel() for task in tasks]
+#     logger.info(f"Cancelling {len(tasks)} tasks")
+#     try:
+#         await asyncio.gather(*tasks, return_exceptions=True)
+#     except asyncio.CancelledError:
+#         logger.info("Shutdown tasks cancelled.")
 
-    logger.info(f"Cancelling {len(tasks)} tasks")
-    try:
-        await asyncio.gather(*tasks, return_exceptions=True)
-    except asyncio.CancelledError:
-        logger.info("Shutdown tasks cancelled.")
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 STATIC_DIR = Path("static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -222,14 +231,18 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
             logger.info(f"Client await for #{user_id} finished without task exceptions.")
         except Exception as e:
             logger.exception(f"A websocket communication task failed: {e}")
+        except asyncio.CancelledError as e:
+            logger.info(f"background tasks cancelled {e}")
         finally:
             # Cancel all tasks
             for task in tasks:
+                logger.info(f"cancelling task in web socket endpoint {task}")
                 if not task.done():
                     task.cancel()
                     try:
                         await task
                     except asyncio.CancelledError:
+                        logger.info(f"tasks are getting cancelled")
                         pass
 
             # Close LiveRequestQueue
