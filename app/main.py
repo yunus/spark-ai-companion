@@ -69,7 +69,7 @@ def create_application() -> FastAPI:
     _app = FastAPI(
         title=settings.app_title,
         description=f"""
-        {settings.app_description}
+    {settings.app_description}
         """,
         version=settings.app_api_version,
         docs_url="/docs" if settings.debug else None,

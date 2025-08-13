@@ -162,8 +162,13 @@ def setup_logging():
     fastapi_logger.setLevel(log_level)
     fastapi_logger.propagate = True
 
+    # google adk logger
+    google_adk_logger = logging.getLogger("google_adk")
+    google_adk_logger.setLevel(log_level)
+    google_adk_logger.propagate = True
+
     # If you want to completely disable certain loggers, you can do so:
-    # logging.getLogger("uvicorn.access").disabled = True
+    logging.getLogger("uvicorn.access").disabled = True
 
     # Mark as configured
     _logging_configured = True
