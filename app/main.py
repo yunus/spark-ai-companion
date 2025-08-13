@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.infrastructure.web.lifespan import LifespanManager
 from app.infrastructure.web.middleware import MiddlewareManager
 from app.infrastructure.web.exception_handlers import ExceptionHandlerManager
+from app.api import router as api_routes
 
 # Global instances
 firebase_client: FirebaseClient = None
@@ -67,7 +68,9 @@ def create_application() -> FastAPI:
     # Create FastAPI app with lifespan
     _app = FastAPI(
         title=settings.app_title,
-        description=settings.app_description,
+        description=f"""
+        {settings.app_description}
+        """,
         version=settings.app_api_version,
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,
@@ -105,7 +108,7 @@ def setup_routes(_app: FastAPI):
     """Configure application routes."""
     logger.info("Setting up application routes", route_setup_phase="started")
 
-    # _app.include_router(api_routes, prefix="/api")
+    _app.include_router(api_routes, prefix="/api")
 
     logger.info(
         "Application routes configured",
