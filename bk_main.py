@@ -22,29 +22,28 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
-import agentops
-
-from google.genai.types import (Part, Content, Blob, Modality)
+from google.genai.types import Part, Content, Blob, Modality
 
 from google.adk.runners import InMemoryRunner
 from google.adk.agents.live_request_queue import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
-from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from google.genai import types as genai_types
 
-from spark_companion.agent import root_agent
+from app.agents.spark_companion.agent import root_agent
 
 from fastapi import FastAPI, WebSocket
 from starlette.websockets import WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from contextlib import asynccontextmanager
 
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 # Load Gemini API Key
 load_dotenv()
 # Configure logging
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"), format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +84,8 @@ async def start_agent_session(user_id: str, is_audio=True):
     run_config = RunConfig(
         response_modalities=[modality],
         speech_config=speech_config,
-        output_audio_transcription=genai_types.AudioTranscriptionConfig(
-        ),  # with this, audio responses are transcriped to text additionally.
-        #proactivity=genai_types.ProactivityConfig(proactive_audio=True), -> supported with native audio model. This enables model to ignore messages that are not directed to it.
+        output_audio_transcription=genai_types.AudioTranscriptionConfig(),  # with this, audio responses are transcriped to text additionally.
+        # proactivity=genai_types.ProactivityConfig(proactive_audio=True), -> supported with native audio model. This enables model to ignore messages that are not directed to it.
         # enable_affective_dialog=True, # -> responds to emotional expressions for more nuanced conversations. native-dialog model only
     )
 
@@ -119,7 +117,9 @@ async def agent_to_client_messaging(websocket, live_events):
                     continue
 
                 # Read the Content and its first Part
-                part: Part = (event.content and event.content.parts and event.content.parts[0])
+                part: Part = (
+                    event.content and event.content.parts and event.content.parts[0]
+                )
                 if not part:
                     continue
 
@@ -128,9 +128,14 @@ async def agent_to_client_messaging(websocket, live_events):
                 if is_audio:
                     audio_data = part.inline_data and part.inline_data.data
                     if audio_data:
-                        message = {"mime_type": "audio/pcm", "data": base64.b64encode(audio_data).decode("ascii")}
+                        message = {
+                            "mime_type": "audio/pcm",
+                            "data": base64.b64encode(audio_data).decode("ascii"),
+                        }
                         await websocket.send_text(json.dumps(message))
-                        logger.debug(f"[AGENT TO CLIENT]: audio/pcm: {len(audio_data)} bytes.")
+                        logger.debug(
+                            f"[AGENT TO CLIENT]: audio/pcm: {len(audio_data)} bytes."
+                        )
                         continue
 
                 # If it's text and a partial text, send it
@@ -162,16 +167,18 @@ async def client_to_agent_messaging(websocket, live_request_queue):
             elif mime_type == "audio/pcm" or mime_type == "image/jpeg":
                 # Send an audio or image data
                 decoded_data = base64.b64decode(data)
-                live_request_queue.send_realtime(Blob(data=decoded_data, mime_type=mime_type))
-                logger.debug(f"[CLIENT TO AGENT]: {mime_type}: {len(decoded_data)} bytes")
+                live_request_queue.send_realtime(
+                    Blob(data=decoded_data, mime_type=mime_type)
+                )
+                logger.debug(
+                    f"[CLIENT TO AGENT]: {mime_type}: {len(decoded_data)} bytes"
+                )
             else:
                 raise ValueError(f"Mime type not supported: {mime_type}")
         except WebSocketDisconnect:
             logger.info("Client disconnected from agent messaging.")
             break
 
-
-from contextlib import asynccontextmanager
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -205,7 +212,9 @@ async def root():
 
 
 @app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str = "false"):
+async def websocket_endpoint(
+    websocket: WebSocket, user_id: int, is_audio: str = "false"
+):
     """Client websocket endpoint"""
     try:
         # Wait for client connection
@@ -213,10 +222,16 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
         logger.info(f"Client #{user_id} connected, audio mode: {is_audio}")
 
         # Start agent session
-        live_events, live_request_queue = await start_agent_session(str(user_id), is_audio.lower() == "true")
+        live_events, live_request_queue = await start_agent_session(
+            str(user_id), is_audio.lower() == "true"
+        )
         # Start tasks
-        agent_to_client_task = asyncio.create_task(agent_to_client_messaging(websocket, live_events))
-        client_to_agent_task = asyncio.create_task(client_to_agent_messaging(websocket, live_request_queue))
+        agent_to_client_task = asyncio.create_task(
+            agent_to_client_messaging(websocket, live_events)
+        )
+        client_to_agent_task = asyncio.create_task(
+            client_to_agent_messaging(websocket, live_request_queue)
+        )
 
         # Wait until the websocket is disconnected or an error occurs
         tasks = [agent_to_client_task, client_to_agent_task]
@@ -228,7 +243,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int, is_audio: str =
             for task in done:
                 if task.exception():
                     task.result()  # This will raise the exception from the task
-            logger.info(f"Client await for #{user_id} finished without task exceptions.")
+            logger.info(
+                f"Client await for #{user_id} finished without task exceptions."
+            )
         except Exception as e:
             logger.exception(f"A websocket communication task failed: {e}")
         except asyncio.CancelledError as e:

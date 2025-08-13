@@ -46,9 +46,7 @@ def download_file_from_url(
         response.raise_for_status()
 
         file_bytes = base64.b64encode(response.content)
-        mime_type = response.headers.get(
-            "Content-Type", mimetypes.guess_type(url)
-        )
+        mime_type = response.headers.get("Content-Type", mimetypes.guess_type(url))
         artifact = Part(inline_data=Blob(data=file_bytes, mime_type=mime_type))
         tool_context.save_artifact(filename=output_filename, artifact=artifact)
         logger.info("Downloaded %s to artifact %s", url, output_filename)
@@ -57,6 +55,7 @@ def download_file_from_url(
     except requests.exceptions.RequestException as e:
         logger.error("Error downloading file from URL: %s", e)
         return None
+
 
 def read_text_file_from_path(
     file_path: str, output_filename: str, tool_context: ToolContext
@@ -75,13 +74,19 @@ def read_text_file_from_path(
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             file_content = file.read()
-        artifact = Part(inline_data=Blob(data=base64.b64encode(file_content.encode("utf-8")), mime_type="text/plain"))
+        artifact = Part(
+            inline_data=Blob(
+                data=base64.b64encode(file_content.encode("utf-8")),
+                mime_type="text/plain",
+            )
+        )
         tool_context.save_artifact(filename=output_filename, artifact=artifact)
         logger.info("Saved %s to artifact %s", file_path, output_filename)
         return output_filename
     except Exception as e:
         logger.error("Error reading file from path: %s", e)
         return None
+
 
 def read_blob_files_from_path(
     file_path: str, output_filename: str, tool_context: ToolContext
@@ -99,11 +104,15 @@ def read_blob_files_from_path(
     """
     logger.info("Reading blob file %s to %s", file_path, output_filename)
     try:
-        mime_type, _ = mimetypes.guess_type(file_path)  
+        mime_type, _ = mimetypes.guess_type(file_path)
 
         with open(file_path, "rb") as file:
             file_bytes = file.read()
-        artifact = Part(inline_data=Blob(data=base64.b64encode(file_bytes.encode("utf-8")), mime_type=mime_type))
+        artifact = Part(
+            inline_data=Blob(
+                data=base64.b64encode(file_bytes.encode("utf-8")), mime_type=mime_type
+            )
+        )
         tool_context.save_artifact(filename=output_filename, artifact=artifact)
         logger.info("Saved %s to artifact %s", file_path, output_filename)
         return output_filename
@@ -111,9 +120,8 @@ def read_blob_files_from_path(
         logger.error("Error reading file from path: %s", e)
         return None
 
-def extract_text_from_pdf_artifact(
-    pdf_path: str, tool_context: ToolContext
-) -> str:
+
+def extract_text_from_pdf_artifact(pdf_path: str, tool_context: ToolContext) -> str:
     """Extracts text from a PDF file stored in an artifact"""
     pdf_artifact = tool_context.load_artifact(pdf_path)
     try:
@@ -139,13 +147,9 @@ def create_html_redline(text1: str, text2: str) -> str:
     html_output = ""
     for op, text in diffs:
         if op == -1:  # Deletion
-            html_output += (
-                f'<del style="background-color: #ffcccc;">{text}</del>'
-            )
+            html_output += f'<del style="background-color: #ffcccc;">{text}</del>'
         elif op == 1:  # Insertion
-            html_output += (
-                f'<ins style="background-color: #ccffcc;">{text}</ins>'
-            )
+            html_output += f'<ins style="background-color: #ccffcc;">{text}</ins>'
         else:  # Unchanged
             html_output += text
 

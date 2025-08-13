@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from app.infrastructure.external.firebase_client import FirebaseClient
-from app.core.config import get_settings
+from app.core.config import settings
 from app.infrastructure.web.lifespan import LifespanManager
 from app.infrastructure.web.middleware import MiddlewareManager
 from app.infrastructure.web.exception_handlers import ExceptionHandlerManager
@@ -17,7 +17,6 @@ from app.api import router as api_routes
 firebase_client: FirebaseClient = None
 
 logger = get_logger(__name__)
-settings = get_settings()
 
 lifespan_manager = LifespanManager(logger, settings)
 middleware_manager = MiddlewareManager(logger)

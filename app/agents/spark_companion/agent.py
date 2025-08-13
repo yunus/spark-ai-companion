@@ -19,41 +19,31 @@
 -- then it handles control to screenshot analyser for Spark UI analysis
 """
 import os
-from datetime import date
-from typing import Optional
-import logging
-
-from google.genai import types
 
 from google.adk.agents import Agent
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import agent_tool 
-from sub_agents.case_matcher import case_matcher
-from sub_agents.spark_ui_analyzer import ui_analyzer 
+from google.adk.tools import agent_tool
 
-from . import prompts
-
-from dotenv import load_dotenv
-
-# Environment Loading (as before)
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-load_dotenv(dotenv_path=dotenv_path, override=True)
-
-logger = logging.getLogger(__name__)
-print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
-# --- Agent Definition ---
+from app.agents.spark_companion.sub_agents.case_matcher import case_matcher
+import app.agents.spark_companion.prompts as prompts
+from app.core.logging import get_logger
+from app.core.config import settings
 
 
-logger.info(f"creating the host agent.")
+logger = get_logger(__name__)
+
+logger.info("creating the host agent.")
+
 root_agent = Agent(
     name="AiCompanionHostAgent",
-    model=os.getenv("ROOT_AGENT_MODEL"), # type: ignore
+    model=settings.agent_models.root,  # type: ignore
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
     global_instruction=prompts.GLOBAL_INSTRUCTION,
-    #sub_agents=[ui_analyzer.spark_ui_agent],
-    #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
+    # sub_agents=[ui_analyzer.spark_ui_agent],
+    # generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
 )
+
 logger.info(
-    f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv('ROOT_AGENT_MODEL')}'.")
+    f"ADK Host Agent '{root_agent.name}' created with model '{settings.agent_models.root}'"
+)

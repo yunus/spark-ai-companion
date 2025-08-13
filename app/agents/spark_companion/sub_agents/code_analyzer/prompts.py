@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CODE_ANALYZER_PROMPT="""
+CODE_ANALYZER_PROMPT = """
 # Guidelines
 You are an expert in Apache Spark code analysis.
 

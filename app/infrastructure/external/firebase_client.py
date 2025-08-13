@@ -6,13 +6,12 @@ import os
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from app.core.config import get_settings
+from app.core.config import settings
 from app.core.exceptions import (
     FirebaseTokenVerificationError,
     FirebaseInitializationError,
 )
 
-settings = get_settings()
 logger = structlog.get_logger(__name__)
 
 

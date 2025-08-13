@@ -58,9 +58,7 @@ class UserService:
         """Get user details by email - alternative login method."""
         user = await self.user_repository.get_by_email(email)
         if not user:
-            raise UserNotFoundError(
-                f"User with email '{email}' not registered"
-            )
+            raise UserNotFoundError(f"User with email '{email}' not registered")
         return self._convert_user_entity_to_dto(user)
 
     async def get_user_by_id(self, user_id: str) -> Optional[UserDTO]:

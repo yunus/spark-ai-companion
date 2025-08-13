@@ -13,19 +13,17 @@
 # limitations under the License.
 
 """Code analyzer agent."""
-import os
 from google.adk.agents import Agent
 from google.adk.tools import load_artifacts
-from tools.code_reader import get_code
+
+from app.agents.spark_companion.tools.code_reader import get_code
+from app.core.config import settings
 from .prompts import CODE_ANALYZER_PROMPT
 
-DEFAULT_MODEL = "gemini-2.5-flash-exp"  # Default model to use if env var is not set
-
 code_analyzer_agent = Agent(
-    model=os.getenv("CODE_ANALYZER_AGENT_MODEL", DEFAULT_MODEL),
+    model=settings.agent_models.code_analyzer,
     name="code_analyzer_agent",
     description="Gets the Apache Spark code from the user and analyzes it. Shares the response report with the user.",
     instruction=CODE_ANALYZER_PROMPT,
-    
-    tools=[get_code, load_artifacts]
+    tools=[get_code, load_artifacts],
 )

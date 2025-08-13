@@ -5,11 +5,10 @@ from typing import Any, Dict
 
 import structlog
 
-from app.core.config import get_settings
+from app.core.config import settings
 
 # Global flag to prevent duplicate setup
 _logging_configured = False
-settings = get_settings()
 
 
 class JSONFormatter(logging.Formatter):
@@ -50,26 +49,26 @@ class JSONFormatter(logging.Formatter):
             # Add extra fields from the record
             for key, value in record.__dict__.items():
                 if key not in (
-                    "name",
-                    "msg",
-                    "args",
-                    "levelname",
-                    "levelno",
-                    "pathname",
-                    "filename",
-                    "module",
-                    "lineno",
-                    "funcName",
-                    "created",
-                    "msecs",
-                    "relativeCreated",
-                    "thread",
-                    "threadName",
-                    "processName",
-                    "process",
-                    "exc_info",
-                    "exc_text",
-                    "stack_info",
+                        "name",
+                        "msg",
+                        "args",
+                        "levelname",
+                        "levelno",
+                        "pathname",
+                        "filename",
+                        "module",
+                        "lineno",
+                        "funcName",
+                        "created",
+                        "msecs",
+                        "relativeCreated",
+                        "thread",
+                        "threadName",
+                        "processName",
+                        "process",
+                        "exc_info",
+                        "exc_text",
+                        "stack_info",
                 ):
                     log_entry[key] = value
 
@@ -83,10 +82,109 @@ class JSONFormatter(logging.Formatter):
         return dt.isoformat()
 
 
+class ConsoleFormatter(logging.Formatter):
+    """
+    Human-readable console formatter for standard Python logging records.
+    Provides clean, colorized output suitable for development and debugging.
+    """
+
+    # ANSI color codes
+    COLORS = {
+        'DEBUG': '\033[36m',  # Cyan
+        'INFO': '\033[32m',  # Green
+        'WARNING': '\033[33m',  # Yellow
+        'ERROR': '\033[31m',  # Red
+        'CRITICAL': '\033[35m',  # Magenta
+    }
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
+    def __init__(self, use_colors: bool = True):
+        super().__init__()
+        self.use_colors = use_colors
+
+    def format(self, record: logging.LogRecord) -> str:
+        message = record.getMessage()
+
+        # Check if the message is already JSON (from structlog)
+        try:
+            parsed_message = json.loads(message)
+            if isinstance(parsed_message, dict) and "timestamp" in parsed_message:
+                # Format structlog JSON message for console
+                timestamp = parsed_message.get("timestamp", "")
+                level = parsed_message.get("level", "").upper()
+                logger_name = parsed_message.get("logger", "")
+                msg = parsed_message.get("event", parsed_message.get("message", ""))
+
+                # Extract additional fields
+                extra_fields = {k: v for k, v in parsed_message.items()
+                                if k not in ["timestamp", "level", "logger", "event", "message"]}
+
+                formatted_msg = self._format_message(timestamp, level, logger_name, msg, extra_fields)
+                return formatted_msg
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # Format regular log record
+        timestamp = self.formatTime(record)
+        level = record.levelname
+        logger_name = record.name
+        msg = message
+
+        # Collect extra fields
+        extra_fields = {}
+        for key, value in record.__dict__.items():
+            if key not in (
+                    "name", "msg", "args", "levelname", "levelno", "pathname",
+                    "filename", "module", "lineno", "funcName", "created",
+                    "msecs", "relativeCreated", "thread", "threadName",
+                    "processName", "process", "exc_info", "exc_text", "stack_info"
+            ):
+                extra_fields[key] = value
+
+        formatted_msg = self._format_message(timestamp, level, logger_name, msg, extra_fields)
+
+        # Add exception information if present
+        if record.exc_info:
+            formatted_msg += "\n" + self.formatException(record.exc_info)
+
+        return formatted_msg
+
+    def _format_message(self, timestamp: str, level: str, logger_name: str, message: str,
+                        extra_fields: Dict[str, Any] = None) -> str:
+        """Format the log message components into a readable string."""
+        # Truncate timestamp to remove microseconds for cleaner output
+        if 'T' in timestamp and '.' in timestamp:
+            timestamp = timestamp.split('.')[0] + 'Z'
+
+        # Apply colors if enabled
+        if self.use_colors:
+            level_color = self.COLORS.get(level, '')
+            level_str = f"{level_color}{self.BOLD}{level:<8}{self.RESET}"
+        else:
+            level_str = f"{level:<8}"
+
+        # Format the base message
+        formatted = f"{timestamp} {level_str} [{logger_name}] {message}"
+
+        # Add extra fields if present
+        if extra_fields:
+            extra_str = " | ".join([f"{k}={v}" for k, v in extra_fields.items()])
+            formatted += f" | {extra_str}"
+
+        return formatted
+
+    def formatTime(self, record: logging.LogRecord, datefmt: str = None) -> str:
+        """Format timestamp in ISO format."""
+        import datetime
+        dt = datetime.datetime.fromtimestamp(record.created, tz=datetime.timezone.utc)
+        return dt.isoformat()
+
+
 def setup_logging():
     """
     Set up structured, configurable logging for the application.
-    All logs will be output in JSON format.
+    Output format depends on settings.log_format configuration.
     """
     global _logging_configured
 
@@ -95,80 +193,90 @@ def setup_logging():
         return
 
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
+    log_format = getattr(settings, 'log_format', 'json').lower()  # Default to JSON
+    use_colors = getattr(settings, 'log_use_colors', True)  # Default to colorized output
 
     # Clear any existing handlers to prevent duplicates
     root_logger = logging.getLogger()
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)
 
-    # A list of processors that will be applied to all log records from structlog.
-    shared_processors = [
-        # This processor must be first to add context from structlog.contextvars.
-        structlog.contextvars.merge_contextvars,
-        # Add logger-specific context.
-        structlog.stdlib.add_logger_name,
-        # Add the log level to the record.
-        structlog.stdlib.add_log_level,
-        # Add a timestamp to the record.
-        structlog.processors.TimeStamper(fmt="iso"),
-        # Perform key-value formatting.
-        structlog.processors.dict_tracebacks,
-    ]
+    # Configure structlog based on format choice
+    if log_format == 'console':
+        # Console-friendly configuration
+        shared_processors = [
+            structlog.contextvars.merge_contextvars,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.dict_tracebacks,
+        ]
 
-    # Configure structlog
-    structlog.configure(
-        processors=[
-            # This processor is used to filter log records by level.
-            structlog.stdlib.filter_by_level,
-            *shared_processors,
-            # This processor must be last to render the log record.
-            structlog.processors.JSONRenderer(),
-        ],
-        # The context class is used to store thread-local context.
-        context_class=dict,
-        # The logger factory is used to create standard Python loggers.
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        # This wrapper class is used to make standard loggers compatible with structlog.
-        wrapper_class=structlog.stdlib.BoundLogger,
-        # Cache the logger on first use.
-        cache_logger_on_first_use=True,
-    )
+        structlog.configure(
+            processors=[
+                structlog.stdlib.filter_by_level,
+                *shared_processors,
+                # Use JSONRenderer even for console mode so ConsoleFormatter can parse it
+                structlog.processors.JSONRenderer(),
+            ],
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
 
-    # Configure the root logger with JSON formatting
+        # Use console formatter
+        formatter = ConsoleFormatter(use_colors=use_colors)
+
+    else:
+        # JSON configuration (default)
+        shared_processors = [
+            structlog.contextvars.merge_contextvars,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.dict_tracebacks,
+        ]
+
+        structlog.configure(
+            processors=[
+                structlog.stdlib.filter_by_level,
+                *shared_processors,
+                structlog.processors.JSONRenderer(),
+            ],
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+
+        # Use JSON formatter
+        formatter = JSONFormatter()
+
+    # Configure the root logger
     root_logger.setLevel(log_level)
 
-    # Create and add a single StreamHandler with JSON formatter
+    # Create and add a single StreamHandler with chosen formatter
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(log_level)
-    # Use the custom JSON formatter for all standard logging records
-    handler.setFormatter(JSONFormatter())
+    handler.setFormatter(formatter)
     root_logger.addHandler(handler)
 
-    # Configure specific loggers to use JSON format
-    # Uvicorn access logs
-    uvicorn_access_logger = logging.getLogger("uvicorn.access")
-    uvicorn_access_logger.setLevel(log_level)
-    uvicorn_access_logger.propagate = (
-        True  # Let it propagate to root logger for JSON formatting
-    )
+    # Configure specific loggers
+    loggers_to_configure = [
+        "uvicorn.access",
+        "uvicorn",
+        "fastapi",
+        "google_adk"
+    ]
 
-    # Uvicorn main logger
-    uvicorn_logger = logging.getLogger("uvicorn")
-    uvicorn_logger.setLevel(log_level)
-    uvicorn_logger.propagate = True
+    for logger_name in loggers_to_configure:
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(log_level)
+        logger.propagate = True
 
-    # FastAPI logger
-    fastapi_logger = logging.getLogger("fastapi")
-    fastapi_logger.setLevel(log_level)
-    fastapi_logger.propagate = True
-
-    # google adk logger
-    google_adk_logger = logging.getLogger("google_adk")
-    google_adk_logger.setLevel(log_level)
-    google_adk_logger.propagate = True
-
-    # If you want to completely disable certain loggers, you can do so:
-    logging.getLogger("uvicorn.access").disabled = True
+    # Optionally disable uvicorn access logs (uncomment if needed)
+    # logging.getLogger("uvicorn.access").disabled = True
 
     # Mark as configured
     _logging_configured = True
@@ -198,7 +306,7 @@ def get_logger(name: str = None):
         name: Logger name. If None, uses the caller's module name.
 
     Returns:
-        A structured logger instance that outputs JSON.
+        A structured logger instance that outputs in the configured format.
     """
     if name is None:
         import inspect

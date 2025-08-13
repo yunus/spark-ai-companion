@@ -8,7 +8,7 @@ from sqlalchemy import engine_from_config, pool
 # Add the project's root directory to the Python path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.config import get_settings
+from app.core.config import settings
 from app.infrastructure.database.models import Base
 
 # This is the Alembic Config object
@@ -25,7 +25,6 @@ version_table = "_alembic_version"
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    settings = get_settings()
     context.configure(
         url=settings.database_url,
         target_metadata=target_metadata,

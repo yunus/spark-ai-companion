@@ -13,22 +13,16 @@
 # limitations under the License.
 
 """Spark UI Analyzer agent."""
-import os
 from google.adk.agents import Agent
 from google.adk.tools import google_search
-from tools.blob_reader import get_blob
+
 from .prompts import UI_ANALYZER_PROMPT
-
-from dotenv import load_dotenv
-# Environment Loading (as before)
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
-load_dotenv(dotenv_path=dotenv_path, override=True)
-
-print(f"UI_ANALYZER_AGENT_MODEL: {os.getenv('UI_ANALYZER_AGENT_MODEL')}")
+from app.core.config import settings
 
 spark_ui_agent = Agent(
-    model=os.getenv("UI_ANALYZER_AGENT_MODEL", "gemini-2.5-flash-exp"),  # type: ignore
+    model=settings.agent_models.ui_analyzer,  # type: ignore
     name="ui_analyzer_agent",
     description="Via screen sharing analyzes the Apache Spark UI. Shares the response report with the user.",
     instruction=UI_ANALYZER_PROMPT,
-    tools=[google_search])
+    tools=[google_search],
+)
