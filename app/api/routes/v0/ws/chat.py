@@ -83,7 +83,9 @@ async def agent_to_client_messaging(websocket, live_events):
                     continue
 
                 # If it's audio, send Base64 encoded audio data
-                is_audio = part.inline_data and part.inline_data.mime_type.startswith("audio/pcm")  # type: ignore
+                is_audio = part.inline_data and part.inline_data.mime_type.startswith(
+                    "audio/pcm"
+                )  # type: ignore
                 if is_audio:
                     audio_data = part.inline_data and part.inline_data.data
                     if audio_data:

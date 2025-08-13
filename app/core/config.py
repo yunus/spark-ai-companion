@@ -26,10 +26,9 @@ class AgentModels(BaseModel):
 
 
 class Settings(BaseSettings):
-
     debug: bool = False
     log_level: Literal["INFO", "ERROR"] = "INFO"
-    log_format: Literal["console", "json"] = "console"
+    log_format: Literal["CONSOLE", "JSON"] = "CONSOLE"
     log_use_colors: bool = True
 
     app_title: str = "Spark Companion"

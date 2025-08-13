@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Code analyzer agent."""
+
 from google.adk.agents import Agent
 from google.adk.tools import VertexAiSearchTool, google_search
 

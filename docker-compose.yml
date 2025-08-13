@@ -1,0 +1,62 @@
+services:
+  # ----------------------------------------------------------------------------
+  # Database Migration Job (runs before backend)
+  # ----------------------------------------------------------------------------
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    command: alembic upgrade head
+    volumes:
+      # Mount alembic files and app directory for migration access
+      - ./app:/app/app
+      - ./migrations:/app/migrations
+      - ./alembic.ini:/app/alembic.ini
+    depends_on:
+      postgres:
+        condition: service_healthy # <-- Waits for the db healthcheck to pass
+    restart: "no" # <-- Migration job should not restart on failure
+
+  # ----------------------------------------------------------------------------
+  # Backend Application Service (agent-api)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - FIREBASE_CREDENTIALS_PATH=/opt/secrets/firebase-credentials.json
+    ports:
+      - "8181:8181"
+    volumes:
+      - "${DOCKER_FIREBASE_CREDENTIALS_PATH}:/opt/secrets/firebase-credentials.json"
+    depends_on:
+      postgres:
+        condition: service_healthy # <-- Waits for the db healthcheck to pass
+      migration:
+        condition: service_completed_successfully # <-- Waits for migration to complete
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Database Service
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    env_file: .env # Uses POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    volumes:
+      - postgres_data0:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: ${POSTGRES_HEALTHCHECK_INTERVAL:-5s}
+      timeout: ${POSTGRES_HEALTHCHECK_TIMEOUT:-10s}
+      retries: 3
+    restart: unless-stopped
+
+# ==============================================================================
+# Named Volumes for Data Persistence
+# ==============================================================================
+volumes:
+  postgres_data0:
+    driver: local

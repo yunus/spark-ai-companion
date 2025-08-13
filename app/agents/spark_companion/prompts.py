@@ -18,7 +18,6 @@ This module defines functions that return instruction prompts for the root agent
 These instructions guide the agent's behavior, workflow, and tool usage.
 """
 
-
 GLOBAL_INSTRUCTION = """
 You are part of a an AI companion for a developer who wants to analyse her spark program to resolve errors and improve performance.
 Keep responses short and concise as you will be speaking to them. Before making any recommendation first collect data by looking into their screen.
