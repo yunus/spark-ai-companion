@@ -1,9 +1,13 @@
+from pathlib import Path
+
 from app.core.logging import setup_logging, get_logger
 
 # Setup logging before importing other modules
 setup_logging()
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 from app.infrastructure.external.firebase_client import FirebaseClient
@@ -21,6 +25,9 @@ logger = get_logger(__name__)
 lifespan_manager = LifespanManager(logger, settings)
 middleware_manager = MiddlewareManager(logger)
 exception_handler_manager = ExceptionHandlerManager(logger, settings)
+
+# Static files configuration
+STATIC_DIR = Path("static")
 
 
 @asynccontextmanager
@@ -92,27 +99,65 @@ def create_application() -> FastAPI:
 
     middleware_manager.setup_middleware(_app)
     exception_handler_manager.setup_exception_handlers(_app)
+    setup_static_files(_app)
     setup_routes(_app)
 
     logger.info(
         "FastAPI application creation completed",
         app_creation_phase="completed",
-        components_configured=["middleware", "exception_handlers", "routes"],
+        components_configured=[
+            "middleware",
+            "exception_handlers",
+            "static_files",
+            "routes",
+        ],
     )
 
     return _app
+
+
+def setup_static_files(_app: FastAPI):
+    """Configure static file serving."""
+    logger.info("Setting up static files", static_setup_phase="started")
+
+    # Only mount static files if the directory exists
+    if STATIC_DIR.exists():
+        _app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+        logger.info(
+            "Static files mounted",
+            static_setup_phase="completed",
+            directory=str(STATIC_DIR),
+            mount_path="/static",
+        )
+    else:
+        logger.warning(
+            "Static directory does not exist, skipping static files setup",
+            directory=str(STATIC_DIR),
+        )
 
 
 def setup_routes(_app: FastAPI):
     """Configure application routes."""
     logger.info("Setting up application routes", route_setup_phase="started")
 
+    # Include API routes
     _app.include_router(api_routes, prefix="/api")
+
+    # Add root route for serving index.html
+    @_app.get("/")
+    async def root():
+        """Serves the index.html"""
+        index_file = STATIC_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+        else:
+            logger.warning("index.html not found in static directory")
+            return {"message": "Welcome to AI Travel Agent API"}
 
     logger.info(
         "Application routes configured",
         route_setup_phase="completed",
-        prefix="/api",
+        routes_configured=["api_routes", "root_route"],
     )
 
 

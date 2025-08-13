@@ -49,26 +49,26 @@ class JSONFormatter(logging.Formatter):
             # Add extra fields from the record
             for key, value in record.__dict__.items():
                 if key not in (
-                        "name",
-                        "msg",
-                        "args",
-                        "levelname",
-                        "levelno",
-                        "pathname",
-                        "filename",
-                        "module",
-                        "lineno",
-                        "funcName",
-                        "created",
-                        "msecs",
-                        "relativeCreated",
-                        "thread",
-                        "threadName",
-                        "processName",
-                        "process",
-                        "exc_info",
-                        "exc_text",
-                        "stack_info",
+                    "name",
+                    "msg",
+                    "args",
+                    "levelname",
+                    "levelno",
+                    "pathname",
+                    "filename",
+                    "module",
+                    "lineno",
+                    "funcName",
+                    "created",
+                    "msecs",
+                    "relativeCreated",
+                    "thread",
+                    "threadName",
+                    "processName",
+                    "process",
+                    "exc_info",
+                    "exc_text",
+                    "stack_info",
                 ):
                     log_entry[key] = value
 
@@ -90,14 +90,14 @@ class ConsoleFormatter(logging.Formatter):
 
     # ANSI color codes
     COLORS = {
-        'DEBUG': '\033[36m',  # Cyan
-        'INFO': '\033[32m',  # Green
-        'WARNING': '\033[33m',  # Yellow
-        'ERROR': '\033[31m',  # Red
-        'CRITICAL': '\033[35m',  # Magenta
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
+        "WARNING": "\033[33m",  # Yellow
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[35m",  # Magenta
     }
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
 
     def __init__(self, use_colors: bool = True):
         super().__init__()
@@ -117,10 +117,15 @@ class ConsoleFormatter(logging.Formatter):
                 msg = parsed_message.get("event", parsed_message.get("message", ""))
 
                 # Extract additional fields
-                extra_fields = {k: v for k, v in parsed_message.items()
-                                if k not in ["timestamp", "level", "logger", "event", "message"]}
+                extra_fields = {
+                    k: v
+                    for k, v in parsed_message.items()
+                    if k not in ["timestamp", "level", "logger", "event", "message"]
+                }
 
-                formatted_msg = self._format_message(timestamp, level, logger_name, msg, extra_fields)
+                formatted_msg = self._format_message(
+                    timestamp, level, logger_name, msg, extra_fields
+                )
                 return formatted_msg
         except (json.JSONDecodeError, ValueError):
             pass
@@ -135,14 +140,32 @@ class ConsoleFormatter(logging.Formatter):
         extra_fields = {}
         for key, value in record.__dict__.items():
             if key not in (
-                    "name", "msg", "args", "levelname", "levelno", "pathname",
-                    "filename", "module", "lineno", "funcName", "created",
-                    "msecs", "relativeCreated", "thread", "threadName",
-                    "processName", "process", "exc_info", "exc_text", "stack_info"
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
+                "exc_info",
+                "exc_text",
+                "stack_info",
             ):
                 extra_fields[key] = value
 
-        formatted_msg = self._format_message(timestamp, level, logger_name, msg, extra_fields)
+        formatted_msg = self._format_message(
+            timestamp, level, logger_name, msg, extra_fields
+        )
 
         # Add exception information if present
         if record.exc_info:
@@ -150,16 +173,22 @@ class ConsoleFormatter(logging.Formatter):
 
         return formatted_msg
 
-    def _format_message(self, timestamp: str, level: str, logger_name: str, message: str,
-                        extra_fields: Dict[str, Any] = None) -> str:
+    def _format_message(
+        self,
+        timestamp: str,
+        level: str,
+        logger_name: str,
+        message: str,
+        extra_fields: Dict[str, Any] = None,
+    ) -> str:
         """Format the log message components into a readable string."""
         # Truncate timestamp to remove microseconds for cleaner output
-        if 'T' in timestamp and '.' in timestamp:
-            timestamp = timestamp.split('.')[0] + 'Z'
+        if "T" in timestamp and "." in timestamp:
+            timestamp = timestamp.split(".")[0] + "Z"
 
         # Apply colors if enabled
         if self.use_colors:
-            level_color = self.COLORS.get(level, '')
+            level_color = self.COLORS.get(level, "")
             level_str = f"{level_color}{self.BOLD}{level:<8}{self.RESET}"
         else:
             level_str = f"{level:<8}"
@@ -177,6 +206,7 @@ class ConsoleFormatter(logging.Formatter):
     def formatTime(self, record: logging.LogRecord, datefmt: str = None) -> str:
         """Format timestamp in ISO format."""
         import datetime
+
         dt = datetime.datetime.fromtimestamp(record.created, tz=datetime.timezone.utc)
         return dt.isoformat()
 
@@ -193,8 +223,10 @@ def setup_logging():
         return
 
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
-    log_format = getattr(settings, 'log_format', 'json').lower()  # Default to JSON
-    use_colors = getattr(settings, 'log_use_colors', True)  # Default to colorized output
+    log_format = getattr(settings, "log_format", "json").lower()  # Default to JSON
+    use_colors = getattr(
+        settings, "log_use_colors", True
+    )  # Default to colorized output
 
     # Clear any existing handlers to prevent duplicates
     root_logger = logging.getLogger()
@@ -202,7 +234,7 @@ def setup_logging():
         root_logger.removeHandler(handler)
 
     # Configure structlog based on format choice
-    if log_format == 'console':
+    if log_format == "console":
         # Console-friendly configuration
         shared_processors = [
             structlog.contextvars.merge_contextvars,
@@ -263,12 +295,7 @@ def setup_logging():
     root_logger.addHandler(handler)
 
     # Configure specific loggers
-    loggers_to_configure = [
-        "uvicorn.access",
-        "uvicorn",
-        "fastapi",
-        "google_adk"
-    ]
+    loggers_to_configure = ["uvicorn.access", "uvicorn", "fastapi", "google_adk"]
 
     for logger_name in loggers_to_configure:
         logger = logging.getLogger(logger_name)
