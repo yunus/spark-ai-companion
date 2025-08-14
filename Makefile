@@ -7,11 +7,22 @@ PYTHON := $(VENV_DIR)/bin/python
 UV := uv
 
 # ==============================================================================
+# Docker Compose command detection
+# ==============================================================================
+# Check if 'docker-compose' (v1) is available
+ifneq (,$(shell command -v docker-compose 2>/dev/null))
+    DOCKER_COMPOSE := docker-compose
+else
+    # Fallback to 'docker compose' (v2)
+    DOCKER_COMPOSE := docker compose
+endif
+
+# ==============================================================================
 # Phony Targets
 # ==============================================================================
 # Use .PHONY to declare targets that are not actual files.
 # This prevents conflicts with files of the same name and improves performance.
-.PHONY: help init run migrate upgrade clean lint format check
+.PHONY: help init run migrate upgrade clean lint format check docker-build docker-up docker-down docker-logs
 
 # ==============================================================================
 # Help / Documentation
@@ -31,6 +42,12 @@ help:
 	@echo "  migrate        Generates a new migration script using the local environment."
 	@echo "                 Usage: make migrate m=\"Your descriptive message\""
 	@echo ""
+	@echo "Docker Development (runs in containers):"
+	@echo "  docker-build   Builds the Docker images for the application."
+	@echo "  docker-up      Starts the application services (backend, db) in detached mode."
+	@echo "  docker-down    Stops and removes the application's Docker containers."
+	@echo "  docker-logs    Follows the logs of the backend service."
+	@echo ""
 	@echo "Code Quality & Formatting (runs locally):"
 	@echo "  lint           Checks the entire project for linting errors with Ruff."
 	@echo "  format         Formats all Python files using Black and Ruff Formatter."
@@ -46,7 +63,7 @@ help:
 check_uv:
 	@if ! command -v $(UV) &> /dev/null; then \
 		echo "ERROR: 'uv' is not installed or not in your PATH."; \
-		echo "Please install it first. See: https://docs.astral.sh/uv/install.sh"; \
+		echo "Please install it first. See: https://docs.astral.sh/uv/#installation"; \
 		exit 1; \
 	fi
 
@@ -85,6 +102,28 @@ migrate:
 	@set -a; source .env; set +a; \
 	$(VENV_DIR)/bin/alembic revision --autogenerate -m "$(m)"
 
+# ==============================================================================
+# Docker Development Commands
+# ==============================================================================
+docker-build:
+	@echo "--> Building Docker images..."
+	@$(DOCKER_COMPOSE) build
+
+docker-up:
+	@echo "--> Starting Docker services in detached mode..."
+	@$(DOCKER_COMPOSE) up -d
+
+docker-down:
+	@echo "--> Stopping and removing Docker containers..."
+	@$(DOCKER_COMPOSE) down
+
+docker-logs:
+	@echo "--> Following logs for the backend service..."
+	@$(DOCKER_COMPOSE) logs -f backend
+
+# ==============================================================================
+# Code Quality & Formatting
+# ==============================================================================
 lint:
 	@echo "--> Linting project with Ruff..."
 	@$(VENV_DIR)/bin/ruff check .
@@ -101,6 +140,9 @@ check:
 	@$(VENV_DIR)/bin/ruff format .
 	@echo "--> Style check and fix complete."
 
+# ==============================================================================
+# Housekeeping
+# ==============================================================================
 clean:
 	@echo "--> Cleaning up project..."
 	@rm -rf $(VENV_DIR)
