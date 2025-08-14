@@ -19,8 +19,6 @@
 -- then it handles control to screenshot analyser for Spark UI analysis
 """
 
-import os
-
 from google.adk.agents import Agent
 from google.adk.tools import agent_tool
 

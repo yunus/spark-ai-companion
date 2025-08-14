@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11.10"
 dependencies = [
+    "absl-py>=2.3.1",
     "agentops==0.4.17",
     "alembic>=1.16.4",
     "annotated-types==0.7.0",
@@ -19,6 +20,7 @@ dependencies = [
     "cloudpickle==3.1.1",
     "cryptography==45.0.3",
     "Deprecated==1.2.18",
+    "diff-match-patch>=20241021",
     "docstring_parser==0.16",
     "fastapi[standard]==0.115.12",
     "firebase-admin==6.5.0",
@@ -69,6 +71,7 @@ dependencies = [
     "opentelemetry-semantic-conventions==0.56b0",
     "ordered-set==4.1.0",
     "packaging==24.2",
+    "pdfplumber>=0.11.7",
     "proto-plus==1.26.1",
     "protobuf==5.29.4",
     "psutil==7.0.0",

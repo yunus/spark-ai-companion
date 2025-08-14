@@ -15,16 +15,21 @@
 """File-related utility functions for code analysis agent."""
 
 import base64
+import pdfplumber
 import binascii
 import io
-import logging
 import mimetypes
 from collections.abc import Sequence
 import requests
 from google.adk.tools import ToolContext
 from google.genai.types import Blob, Part
+from diff_match_patch import diff_match_patch
+from absl import app
 
-logger = logging.getLogger(__name__)
+from app.core.logging import get_logger
+
+dmp = diff_match_patch()
+logger = get_logger(__name__)
 
 
 def download_file_from_url(

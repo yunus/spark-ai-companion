@@ -187,7 +187,7 @@ async def chat_ws(websocket: WebSocket, user_id: str, is_audio: str = "false"):
                     try:
                         await task
                     except asyncio.CancelledError:
-                        logger.info(f"tasks are getting cancelled")
+                        logger.info("tasks are getting cancelled")
                         pass
 
             # Close LiveRequestQueue
