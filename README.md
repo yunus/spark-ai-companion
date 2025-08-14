@@ -39,19 +39,29 @@ Follow these instructions to get the Spark AI Companion running on your local ma
 ### 1. Clone the Repository
 
 ```sh
-git clone <your-repository-url>
+git clone https://github.com/yunus/spark-ai-companion
 cd spark-ai-companion
 ```
 
 ### 2. Configuration
 
-The application uses environment variables for configuration. Start by copying the example file:
+The application uses environment variables for configuration. Choose the appropriate environment file based on your development setup:
+
+#### For Docker Compose Development
+If you want to run the application using Docker Compose, copy the Docker environment file:
 
 ```sh
-cp .env.example .env
+cp .env.docker .env
 ```
 
-Now, edit the `.env` file and fill in the required values:
+#### For Local Development (VS Code/PyCharm)
+If you want to debug locally using VS Code, PyCharm, or run the application directly on your machine, copy the sample environment file:
+
+```sh
+cp .env.sample .env
+```
+
+After copying the appropriate file, edit the `.env` file and fill in the required values for your specific environment.
 
 #### **Authentication**
 
@@ -98,7 +108,7 @@ You can run the project either directly on your machine (native) or using Docker
 
 This is the easiest way to get started, as it includes the database.
 
-1.  **Set Docker Credential Paths**: In your `.env` file, make sure the `DOCKER_*_CREDENTIALS_PATH` variables point to your GCP and Firebase JSON key files on your **host machine**.
+1.  **Set Docker Credential Paths**: In your `.env` file, make sure the `DOCKER_GOOGLE_APPLICATION_CREDENTIALS` variables point to your GCP and Firebase JSON key files on your **host machine**.
 
     ```ini
     # .env
