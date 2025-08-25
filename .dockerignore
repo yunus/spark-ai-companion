@@ -1,0 +1,76 @@
+# .dockerignore
+
+# ==============================================================================
+# Version Control
+# ==============================================================================
+# Ignore the entire Git directory and its metadata.
+.git
+.gitignore
+.github
+
+# ==============================================================================
+# Docker & Compose Files
+# ==============================================================================
+# These files define the build, but are not needed inside the image itself.
+.dockerignore
+Dockerfile
+*.Dockerfile
+docker-compose.yml
+
+# ==============================================================================
+# Local Development Environment
+# ==============================================================================
+# Ignore the local Python virtual environment. The Dockerfile creates its own.
+.venv/
+venv/
+
+# Ignore environment files. Secrets should be passed at runtime, not built in.
+.env
+.env.*
+!/.env.example
+
+# ==============================================================================
+# Python / uv Cache & Bytecode
+# ==============================================================================
+# Ignore Python's bytecode cache directories.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore the uv cache directory if it's created locally.
+.uv_cache/
+
+# ==============================================================================
+# IDE and OS-specific files
+# ==============================================================================
+# Ignore common IDE configuration directories.
+.idea/
+.vscode/
+
+# Ignore macOS specific files.
+.DS_Store
+
+# ==============================================================================
+# Project & Tooling Files
+# ==============================================================================
+# Ignore development and documentation files not needed for the app to run.
+Makefile
+README.md
+notebooks/
+eval_stories/
+
+# Ignore testing artifacts.
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Ignore build artifacts
+dist/
+build/
+*.egg-info/
+
+# infrastructure files
+terraform/
+kubernetes/
+infra/

@@ -11,7 +11,7 @@ import { MediaHandler } from "./media-handler.js";
 
 // Connect the server with a WebSocket connection
 const sessionId = Math.random().toString().substring(10);
-const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
+const ws_url = "ws://" + window.location.host + "/api/v0/ws/chat/" + sessionId;
 let websocket = null;
 let is_audio = true;
 let is_screen = false;
