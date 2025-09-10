@@ -31,6 +31,9 @@ from google.adk.tools import agent_tool
 from sub_agents.case_matcher import case_matcher
 from sub_agents.spark_ui_analyzer import ui_analyzer 
 
+from tools.dataproc_helper import get_dataproc_cluster_list, get_dataproc_cluster_detatils
+from tools.dataproc_job_helper import get_dataproc_job_output
+
 from . import prompts
 
 from dotenv import load_dotenv
@@ -53,7 +56,7 @@ root_agent = Agent(
     global_instruction=prompts.GLOBAL_INSTRUCTION,
     #sub_agents=[ui_analyzer.spark_ui_agent],
     #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
-    tools=[agent_tool.AgentTool(agent=case_matcher.case_matcher_agent)],
+    tools=[agent_tool.AgentTool(agent=case_matcher.case_matcher_agent), get_dataproc_cluster_list, get_dataproc_cluster_detatils, get_dataproc_job_output],
 )
 logger.info(
     f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv('ROOT_AGENT_MODEL')}'.")
