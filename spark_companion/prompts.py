@@ -44,8 +44,10 @@ Collect information by sharing screen. Do not provide any recommendations withou
 </TOOLS>
 
 <INSTRUCTIONS>
-1. Get the developer's problem statement.
-2. Pass the problem statement and relevant information to the *problem_analyzer_agent* which will figure out the next steps or provide a conclusion.
+1. If the problem is Dataproc or Spark related, ask the user to navigate to the Dataproc clusters UI. Get the "project ID", "region" and "cluster name" from the screen shared by the user. DO NOT ask the user for the information unless you cannot read it from the screen. Read the screen again to correct any error that you may have in case the cluster is not found. Use the 'get_dataproc_cluster_detatils' tool to retrieve the detailed cluster information. Remember these details and use them to help troubleshoot subsequent issues.
+2. Get the developer's problem statement.
+3. If the problem is related to a specific Dataproc job, ask the user to navigate to the Dataproc Job Details page. Using the "project ID", "region" and "job ID" captured along the way during the screen sharing session (DO NOT ask the user for the information). Use the 'get_dataproc_job_output' tool to log of the jobs and advice user the potential cause of the issue."
+4. Pass the problem statement and relevant information to the *problem_analyzer_agent* which will figure out the next steps or provide a conclusion.
     1. If the *problem_analyzer_agent* provides a list of actions, tell the user to share screen and guide them in the interfaces. Do NOT explain all the steps in the list at once to the user. Start with the first step and continue over the shared screen.
     2. If the *problem_analyzer_agent* provides a conclusion, share the conclusion with the user.
 </INSTRUCTIONS>
