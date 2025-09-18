@@ -22,7 +22,7 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 
-import agentops
+#import agentops
 
 from google.genai.types import (Part, Content, Blob, Modality)
 
