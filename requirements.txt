@@ -25,6 +25,7 @@ google-cloud-audit-log==0.3.2
 google-cloud-bigquery==3.33.0
 google-cloud-bigtable==2.32.0
 google-cloud-core==2.4.3
+google-cloud-dataproc==5.21.0
 google-cloud-logging==3.12.1
 google-cloud-resource-manager==1.14.2
 google-cloud-secret-manager==2.23.3
