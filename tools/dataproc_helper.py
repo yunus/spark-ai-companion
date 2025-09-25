@@ -1,4 +1,3 @@
-
 """'dataproc helper' tool for Spark UI analyzer agent"""
 
 import logging
@@ -27,7 +26,7 @@ def get_dataproc_cluster_list(project_id: str, region: str):
       
     Returns:
       A dict with "status" and (optional) "cluster_name" list.
-    """    
+    """
 
     access_token,proj_id=get_creds()
     functions_url = f"https://dataproc.googleapis.com/v1/projects/{project_id}/regions/{region}/clusters"
@@ -49,7 +48,7 @@ def get_dataproc_cluster_detatils(project_id: str, region: str, cluster_name: st
     Returns:
       A dict with "status" and (optional) "cluster_details" dictionary.
     """
-
+    logger.info(f"fetching cluster details for cluster name: {cluster_name}")
     access_token,proj_id=get_creds()
     functions_url = f"https://dataproc.googleapis.com/v1/projects/{project_id}/regions/{region}/clusters/{cluster_name}"
     headers_req={"Authorization": "Bearer " + access_token}
