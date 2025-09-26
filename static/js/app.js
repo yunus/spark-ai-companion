@@ -216,6 +216,41 @@ function addSubmitHandler() {
   });
 }
 
+// Add hotkey handlers
+document.addEventListener('keydown', (event) => {
+    // Determine if the correct modifier key (Cmd or Ctrl) is pressed
+    const isModifierPressed = event.metaKey || event.ctrlKey; 
+    
+    // Check for Cmd/Ctrl + D
+    if (isModifierPressed && event.key === 'd') {
+        // Prevent the browser's default action (usually bookmarking the page)
+        event.preventDefault(); 
+        
+        const audioButton = document.getElementById('audioButton');
+        // Programmatically trigger a click on the audio button
+        // This is the cleanest way to toggle the button's behavior
+        if (audioButton) {
+            audioButton.click();
+            console.log("Hotkey (Cmd/Ctrl + D) activated audioButton.");
+        }
+    }
+
+    // Check for Cmd/Ctrl + D
+    if (isModifierPressed && event.key === 's') {
+        // Prevent the browser's default action (usually bookmarking the page)
+        event.preventDefault(); 
+        
+        const screenButton = document.getElementById('screenButton');
+        // Programmatically trigger a click on the audio button
+        // This is the cleanest way to toggle the button's behavior
+        if (screenButton) {
+            screenButton.click();
+            console.log("Hotkey (Cmd/Ctrl + S) activated screenButton.");
+        }
+    }
+});
+
+
 // Send a message to the server
 function sendMessage(message) {
   if (websocket && websocket.readyState == WebSocket.OPEN) {
