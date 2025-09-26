@@ -26,7 +26,7 @@ if __name__ == "__main__":
         # split every line and word with space and then filter words that are shorter than 3 characters
         spark.sparkContext.setJobDescription("split words")
         df = df.select(explode(split(df.value, "[,\\s]+")).alias("word"))
-        
+
         spark.sparkContext.setJobDescription("groupby count")
         df_with_groupby = df.groupBy("word").agg(count("*").alias("count"))
 
@@ -42,8 +42,8 @@ if __name__ == "__main__":
         spark.sparkContext.setJobDescription("show action on top 10 words")
         cached_df_words_sorted.show(10, True)
         print('Showing Profiles')
-        spark.sparkContext.show_profiles()
-        print("showed profiles")
+        # spark.sparkContext.show_profiles()
+        # print("showed profiles")
 
         print(f"++++ Number of partitions {cached_df_words_sorted.rdd.getNumPartitions()}")
         #explain_dataframe.explain_a_dataframe(cached_df_words_sorted)
@@ -58,4 +58,3 @@ if __name__ == "__main__":
         spark.sparkContext.setJobDescription("countwords more than 1000 occurences")
         count = df_words_sorted_filtered.count()
         print(f"count: {count}")
-    
