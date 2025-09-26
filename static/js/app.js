@@ -82,6 +82,7 @@ const addMessage = (text, sender, msgId = null) => {
 };
 
 // WebSocket handlers
+let isConnectionOpen = false;
 function connectWebsocket() {
   // Connect websocket
   websocket = new WebSocket(ws_url + "?is_audio=" + is_audio);
@@ -89,9 +90,11 @@ function connectWebsocket() {
   // Handle connection open
   websocket.onopen = function () {
   // Connection opened messages
+    isConnectionOpen = true;
     console.log("WebSocket connection opened.");
     //document.getElementById("messages").textContent = "Connection opened";
-    addMessage("Connection opened", "bot");
+    addMessage("[Agent Online]", "bot");
+    addMessage("How can I help you today?", "bot");
 
     // Enable the Send button
     document.getElementById("sendButton").disabled = false;
@@ -165,7 +168,10 @@ function connectWebsocket() {
     console.log("WebSocket connection closed.");
     document.getElementById("sendButton").disabled = true;
     //document.getElementById("messages").textContent = "Connection closed";
-    addMessage("Connection closed", "bot");
+    if (isConnectionOpen) {
+      addMessage("Agent connection closed", "bot");
+      isConnectionOpen = false;
+    }
     setTimeout(function () {
       console.log("Reconnecting...");
       connectWebsocket();
@@ -178,41 +184,36 @@ function connectWebsocket() {
 }
 connectWebsocket();
 
-// Add submit handler to the form
-function addSubmitHandler() {
-  sendButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    const message = messageInput.value;
+function submitChat() {
+  const message = messageInput.value;
     if (message) {
       const p = document.createElement("p");
       p.textContent = "> " + message;
-      //messagesDiv.appendChild(p);
       addMessage(message, 'user')
       messageInput.value = "";
       sendMessage({
         mime_type: "text/plain",
         data: message,
       });
-      //console.log("[CLIENT TO AGENT] " + message);
+      console.log("[CLIENT TO AGENT] " + message);
     }
+}
+
+// Add submit handler to the form
+function addSubmitHandler() {
+  sendButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    submitChat();
   });
-  // messageForm.onsubmit = function (e) {
-  //   e.preventDefault();
-  //   const message = messageInput.value;
-  //   if (message) {
-  //     const p = document.createElement("p");
-  //     p.textContent = "> " + message;
-  //     //messagesDiv.appendChild(p);
-  //     addMessage(message, 'bot')
-  //     messageInput.value = "";
-  //     sendMessage({
-  //       mime_type: "text/plain",
-  //       data: message,
-  //     });
-  //     //console.log("[CLIENT TO AGENT] " + message);
-  //   }
-  //   return false;
-  // };
+  messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitChat();
+      }
+      // Auto-resize the textarea
+      messageInput.style.height = 'auto';
+      messageInput.style.height = chatInput.scrollHeight + 'px';
+  });
 }
 
 // Send a message to the server
@@ -246,7 +247,7 @@ let micStream;
 
 // Add inactivity timer variables
 let inactivityTimer = null;
-const INACTIVITY_TIMEOUT = 60000; // 60 seconds in milliseconds
+const INACTIVITY_TIMEOUT = 300000; // in milliseconds
 
 // Function to reset inactivity timer
 function resetInactivityTimer() {
@@ -259,7 +260,7 @@ function resetInactivityTimer() {
       if (is_audio) {
         stopAudio();
         const buttonText = audioButton.querySelector('span:not(.material-icons)');
-        buttonText.textContent = "Start Audio";
+        // buttonText.textContent = "Start Audio";
         audioButton.classList.remove('active');
         is_audio = false;
         // websocket.close();
@@ -320,9 +321,9 @@ function stopAudio() {
 // Audio button handling
 const audioButton = document.getElementById("audioButton");
 audioButton.addEventListener("click", () => {
-  const buttonText = audioButton.querySelector('span:not(.material-icons)');
+  // const buttonText = audioButton.querySelector('span:not(.material-icons)');
   //if (buttonText.textContent === "Start Audio") {
-  if (buttonText.classList.contains("active")) {
+  if (!audioButton.classList.contains("active")) {
     startAudio();
     is_audio = true;
     // websocket.close(); // close current connection
@@ -399,7 +400,8 @@ async function startScreenShare() {
 function stopScreenShare() {
   mediaHandler.stopAll();
   const buttonText = screenButton.querySelector('span:not(.material-icons)');
-  buttonText.textContent = "Start Screen Sharing";
+  //buttonText.textContent = "Start Screen Sharing";
+  screenButton.classList.remove('active');
   is_screen = false;
   sharingScreen = false;
   // websocket.close(); // close current connection
