@@ -87,7 +87,7 @@ export class MediaHandler {
     this.currentStream = stream;
     if (this.videoElement) {
       this.videoElement.srcObject = stream;
-      this.videoElement.classList.remove('hidden');
+      //this.videoElement.classList.remove('hidden');
     }
   }
 
@@ -98,7 +98,7 @@ export class MediaHandler {
     }
     if (this.videoElement) {
       this.videoElement.srcObject = null;
-      this.videoElement.classList.add('hidden');
+      //this.videoElement.classList.add('hidden');
     }
     this.isWebcamActive = false;
     this.isScreenActive = false;

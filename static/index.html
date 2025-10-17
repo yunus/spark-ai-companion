@@ -1,39 +1,54 @@
-<!doctype html>
-<html>
-  <head>
-    <title>AI Companion</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="/static/style.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSO Hackathon - AI Companion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/js/app.js" type="module"></script>
-  </head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
-  <body>
-    <h1>Google Cloud AI Companion</h1>
-    <div id="messages"></div>
-    <br />
-
-    <form id="messageForm">
-      <label for="message">Message:</label>
-      <input type="text" id="message" name="message" />
-      <button type="submit" id="sendButton" disabled>
-        <span class="material-icons">send</span>
-        <span>Send</span>
-      </button>
-      
-      <div class="button-group">
-        <button type="button" id="audioButton">
-          <span class="material-icons">mic</span>
-          <span>Start Audio</span>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="text-xl">PSO Hackathon - AI Companion</div>
+    </div>
+    <div class="chat-messages" id="messages-container">
+    </div></form>
+    <div class="input-container">
+        <button id="screenButton" class="action-button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M12 21.75a9.75 9.75 0 100-19.5 9.75 9.75 0 000 19.5z" stroke-linecap="round" stroke-linejoin="round" />
+                <rect x="7" y="7" width="10" height="10" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 9V15M9 12L12 9L15 12" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
         </button>
-        <button type="button" id="screenButton">
-          <span class="material-icons">screen_share</span>
-          <span>Start Screen Sharing</span>
+        <button id="audioButton" class="action-button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M12 15a4 4 0 01-4-4V6a4 4 0 018 0v5a4 4 0 01-4 4z" fill="currentColor" stroke="none"/>
+                <path d="M15 11v1a3 3 0 01-6 0v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 19v-2m-3 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </button>
-      </div>
-    </form>
-    <video id="screenShareVideo" class="hidden" autoplay playsinline></video>
-  </body>
+        <textarea id="message" placeholder="Type a message..." rows="1"></textarea>
+        <button id="sendButton" class="action-button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        </button>
+    </div>
+</div>
+<div>
+  <video id="screenShareVideo" autoplay playsinline poster="/static/screenshare_placeholder.png" style="
+    height: 90%;
+    margin: 10px 10px 10px 10px;
+    width: 90%;
+    "></video>
+</div>
 
+</body>
 </html>

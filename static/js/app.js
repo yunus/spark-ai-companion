@@ -17,16 +17,72 @@ let is_audio = true;
 let is_screen = false;
 
 // Get DOM elements
-const messageForm = document.getElementById("messageForm");
+// const messageForm = document.getElementById("messageForm");
 const messageInput = document.getElementById("message");
-const messagesDiv = document.getElementById("messages");
+//const messagesDiv = document.getElementById("messages");
+const sendButton = document.getElementById("sendButton");
 let currentMessageId = null;
 
 // Initialize MediaHandler
 const mediaHandler = new MediaHandler();
 mediaHandler.initialize(document.getElementById("screenShareVideo"));
 
+const messagesContainer = document.getElementById('messages-container');
+
+// Function to get current time for timestamp
+const getTimestamp = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+};
+
+// Function to add a new message to the chat
+const addMessage = (text, sender, msgId = null) => {
+    let pDiv = null;
+    let messageDiv = null;
+    let previousText = "";
+    let newMsgDiv = true;
+    if (msgId !== null) {
+        let pDivId = "pDiv" + msgId;
+        let msgDivId = "msgDiv" + msgId;
+        pDiv = document.getElementById(pDivId);
+        if (pDiv === null) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = msgDivId;
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+
+            pDiv = document.createElement('p');
+            pDiv.id = pDivId;
+            messageDiv.appendChild(pDiv);
+        } else {
+            newMsgDiv = false;
+            previousText = document.getElementById(pDivId).textContent;
+            messageDiv = document.getElementById(msgDivId);
+        }
+    } else {
+        messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+        pDiv = document.createElement('p');
+        messageDiv.appendChild(pDiv);
+    }
+    pDiv.textContent = previousText + text;
+
+    if (newMsgDiv) {
+        const timestampSpan = document.createElement('span');
+        timestampSpan.classList.add('message-timestamp');
+        timestampSpan.textContent = getTimestamp();
+        messageDiv.appendChild(timestampSpan);
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+};
+
 // WebSocket handlers
+let isConnectionOpen = false;
 function connectWebsocket() {
   // Connect websocket
   websocket = new WebSocket(ws_url + "?is_audio=" + is_audio);
@@ -34,8 +90,11 @@ function connectWebsocket() {
   // Handle connection open
   websocket.onopen = function () {
   // Connection opened messages
+    isConnectionOpen = true;
     console.log("WebSocket connection opened.");
-    document.getElementById("messages").textContent = "Connection opened";
+    //document.getElementById("messages").textContent = "Connection opened";
+    addMessage("[Agent Online]", "bot");
+    addMessage("How can I help you today?", "bot");
 
     // Enable the Send button
     document.getElementById("sendButton").disabled = false;
@@ -82,22 +141,25 @@ function connectWebsocket() {
       // add a new message for a new turn
       if (currentMessageId == null) {
         currentMessageId = Math.random().toString(36).substring(7);
-        const message = document.createElement("div");
-        message.id = currentMessageId;
-        // Append the message element to the messagesDiv
-        messagesDiv.appendChild(message);
+        // const message = document.createElement("div");
+        // message.id = currentMessageId;
+        // // Append the message element to the messagesDiv
+        // //messagesDiv.appendChild(message);
+        // addMessage("", 'bot')
       }
 
       // Add message text to the existing message element
-      const message = document.getElementById(currentMessageId);
+      // const message = document.getElementById(currentMessageId);
       // Append new data to our raw text store
-      const rawText = (message.dataset.rawText || "") + message_from_server.data;
-      message.dataset.rawText = rawText;
+      // const rawText = (message.dataset.rawText || "Companion: ") + message_from_server.data;
+      console.log("rawText:" + message_from_server.data)
+      // message.dataset.rawText = rawText;
+      addMessage(message_from_server.data, 'bot', currentMessageId);
       // Render the accumulated markdown text into the message element
-      message.innerHTML = marked.parse(rawText);
+      //message.innerHTML = marked.parse(rawText);
 
       // Scroll down to the bottom of the messagesDiv
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      //messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   };
 
@@ -105,7 +167,11 @@ function connectWebsocket() {
   websocket.onclose = function () {
     console.log("WebSocket connection closed.");
     document.getElementById("sendButton").disabled = true;
-    document.getElementById("messages").textContent = "Connection closed";
+    //document.getElementById("messages").textContent = "Connection closed";
+    if (isConnectionOpen) {
+      addMessage("Agent connection closed", "bot");
+      isConnectionOpen = false;
+    }
     setTimeout(function () {
       console.log("Reconnecting...");
       connectWebsocket();
@@ -118,25 +184,72 @@ function connectWebsocket() {
 }
 connectWebsocket();
 
-// Add submit handler to the form
-function addSubmitHandler() {
-  messageForm.onsubmit = function (e) {
-    e.preventDefault();
-    const message = messageInput.value;
+function submitChat() {
+  const message = messageInput.value;
     if (message) {
       const p = document.createElement("p");
       p.textContent = "> " + message;
-      messagesDiv.appendChild(p);
+      addMessage(message, 'user')
       messageInput.value = "";
       sendMessage({
         mime_type: "text/plain",
         data: message,
       });
-      //console.log("[CLIENT TO AGENT] " + message);
+      console.log("[CLIENT TO AGENT] " + message);
     }
-    return false;
-  };
 }
+
+// Add submit handler to the form
+function addSubmitHandler() {
+  sendButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    submitChat();
+  });
+  messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          submitChat();
+      }
+      // Auto-resize the textarea
+      messageInput.style.height = 'auto';
+      messageInput.style.height = chatInput.scrollHeight + 'px';
+  });
+}
+
+// Add hotkey handlers
+document.addEventListener('keydown', (event) => {
+    // Determine if the correct modifier key (Cmd or Ctrl) is pressed
+    const isModifierPressed = event.metaKey || event.ctrlKey; 
+    
+    // Check for Cmd/Ctrl + D
+    if (isModifierPressed && event.key === 'd') {
+        // Prevent the browser's default action (usually bookmarking the page)
+        event.preventDefault(); 
+        
+        const audioButton = document.getElementById('audioButton');
+        // Programmatically trigger a click on the audio button
+        // This is the cleanest way to toggle the button's behavior
+        if (audioButton) {
+            audioButton.click();
+            console.log("Hotkey (Cmd/Ctrl + D) activated audioButton.");
+        }
+    }
+
+    // Check for Cmd/Ctrl + D
+    if (isModifierPressed && event.key === 's') {
+        // Prevent the browser's default action (usually bookmarking the page)
+        event.preventDefault(); 
+        
+        const screenButton = document.getElementById('screenButton');
+        // Programmatically trigger a click on the audio button
+        // This is the cleanest way to toggle the button's behavior
+        if (screenButton) {
+            screenButton.click();
+            console.log("Hotkey (Cmd/Ctrl + S) activated screenButton.");
+        }
+    }
+});
+
 
 // Send a message to the server
 function sendMessage(message) {
@@ -169,7 +282,7 @@ let micStream;
 
 // Add inactivity timer variables
 let inactivityTimer = null;
-const INACTIVITY_TIMEOUT = 60000; // 60 seconds in milliseconds
+const INACTIVITY_TIMEOUT = 300000; // in milliseconds
 
 // Function to reset inactivity timer
 function resetInactivityTimer() {
@@ -182,7 +295,7 @@ function resetInactivityTimer() {
       if (is_audio) {
         stopAudio();
         const buttonText = audioButton.querySelector('span:not(.material-icons)');
-        buttonText.textContent = "Start Audio";
+        // buttonText.textContent = "Start Audio";
         audioButton.classList.remove('active');
         is_audio = false;
         // websocket.close();
@@ -243,13 +356,14 @@ function stopAudio() {
 // Audio button handling
 const audioButton = document.getElementById("audioButton");
 audioButton.addEventListener("click", () => {
-  const buttonText = audioButton.querySelector('span:not(.material-icons)');
-  if (buttonText.textContent === "Start Audio") {
+  // const buttonText = audioButton.querySelector('span:not(.material-icons)');
+  //if (buttonText.textContent === "Start Audio") {
+  if (!audioButton.classList.contains("active")) {
     startAudio();
     is_audio = true;
     // websocket.close(); // close current connection
     // connectWebsocket(); // reconnect with the audio mode
-    buttonText.textContent = "Stop Audio";
+    //buttonText.textContent = "Stop Audio";
     audioButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
   } else {
@@ -257,7 +371,7 @@ audioButton.addEventListener("click", () => {
     is_audio = false;
     // websocket.close(); // close current connection
     // connectWebsocket(); // reconnect without audio mode
-    buttonText.textContent = "Start Audio";
+    //buttonText.textContent = "Start Audio";
     audioButton.classList.remove('active');
     if (inactivityTimer) {
       clearTimeout(inactivityTimer);
@@ -291,12 +405,15 @@ function arrayBufferToBase64(buffer) {
  * Screen sharing handling
  */
 
+let sharingScreen = false;
+
 // Start screen sharing
 async function startScreenShare() {
   const success = await mediaHandler.startScreenShare();
   if (success) {
-    const buttonText = screenButton.querySelector('span:not(.material-icons)');
-    buttonText.textContent = "Stop Screen Sharing";
+    //const buttonText = screenButton.querySelector('span:not(.material-icons)');
+    //buttonText.textContent = "Stop Screen Sharing";
+    sharingScreen = true;
     is_screen = true;
     // websocket.close(); // close current connection
     // connectWebsocket(); // reconnect with screen sharing mode
@@ -318,8 +435,10 @@ async function startScreenShare() {
 function stopScreenShare() {
   mediaHandler.stopAll();
   const buttonText = screenButton.querySelector('span:not(.material-icons)');
-  buttonText.textContent = "Start Screen Sharing";
+  //buttonText.textContent = "Start Screen Sharing";
+  screenButton.classList.remove('active');
   is_screen = false;
+  sharingScreen = false;
   // websocket.close(); // close current connection
   // connectWebsocket(); // reconnect without screen sharing mode
 }
@@ -328,7 +447,8 @@ function stopScreenShare() {
 const screenButton = document.getElementById("screenButton");
 screenButton.addEventListener("click", () => {
   const buttonText = screenButton.querySelector('span:not(.material-icons)');
-  if (buttonText.textContent === "Start Screen Sharing") {
+  //if (buttonText.textContent === "Start Screen Sharing") {
+  if (!sharingScreen) {
     startScreenShare();
     screenButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
