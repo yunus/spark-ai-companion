@@ -1,28 +1,59 @@
 # AI Companion
 
+AI companion is a co-browser agent that is built to help users troubleshoot their use case with sharing a browser with an AI agent.
+By screen sharing, AI agent becomes more effective in guiding a user to resolution.
+
+Co-browsing is done via Human agents, and it is very effective. However, it doesn't scale and also it raises privacy issues as the human agent
+can see all your details. On the other hand, AI agents can scale and since the AI APIs are under your control, you don't have to worry about
+information leakage.
+
+In this demo, we defined some troubleshoot cases for Google Cloud Dataproc. We loaded them into Vertex AI search which acts as the RAG backend.
+When the end user asks about a problem, AI agent searches among the problems and guide the user to the solution.
+If you want to adjust the application for your own use case, you need to replace the knowledge base.
+
+## Learnings with initial tests
+**Should I train with UI:** Since Google Cloud UI is public and there are many examples online, we never had to give any prompts for the UI. 
+Even if there are new features added to the UI, AI reads the page really fast. So by just providing some prompts like first go to tab X and then click link etc., 
+you may help AI to navigate the page.
+
+**Why should I give troubleshooting cases?** When we don't give troubleshooting steps, AI answers from its own world knowledge, which 
+(i) starts with basic stuff like "have you enabled Dataproc API" which has no value for someone who is already running Dataproc
+(ii) cannot do advanced, multi step troubleshooting. 
+
+So it is best to provide a step by step guide.
+
 ## Setup:
 ```sh
-# create venv envitonment
-python3 -m venv .venv
-
-pip install -r requirements.txt
-
+# install dependencies with uv
+make install
 ```
 
 The application uses Vertex AI search tool, it requires to use Google Cloud Vertex AI endpoints and not the AI studio.
-For that reason, you need to set application-default login. Also in .env file you should set the vertex ai endpoint. In .env.example there is already an example.
+For that reason, you need to set application-default login. 
+
+Copy [.env_example](.env_example) file to `.env` and then configure it. 
 
 
 ```sh
-# Runt the code:
-uvicorn main:app --reload
-
+# Run the code:
+make playground-full-ui
 # navigate in your browser to localhost:8000
 ```
 
 ## Adding new cases
 
-To make it easier to add new cases, we have created a [sheet](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) where you can add more.
-The sheet is loaded to a BigQuery external table. There is a [tiny pipeline](https://pantheon.corp.google.com/bigquery?e=13802955&inv=1&invt=Ab3nKg&mods=dm_deploy_from_gcs&project=ai-companion-pso-hack&ws=!1m6!1m5!19m4!1m3!1sai-companion-pso-hack!2seurope-west4!3s7ff392bf-e2e1-4d69-aec7-bab11f7fca58) which loads data from external table to a native table. It runs nightly but you can trigger manually when you have a new change.
+To make it easier to add new cases, we have created a [Google sheet](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) where you can add more.
+The sheet is loaded to a BigQuery external table and then into a native table, since vertex Search supports only native tables.
 
-After loading to the native table, you should also update the [vertex ai search](https://pantheon.corp.google.com/gen-app-builder/locations/global/engines/ai-companion-kb_1752576550130/data/documents?e=13802955&inv=1&invt=Ab3nKg&mods=dm_deploy_from_gcs&project=ai-companion-pso-hack) to re-index the data. That also happens nightly but you can manually trigger it.
+After loading to the native table, you should also update the Vertex AI Search to re-index the data. That also happens nightly but you can manually trigger it.
+
+# Architecture
+
+The architectre is straight forward, there is a central AI agent which can use tools to help you troubleshoot your applications.
+Current tooling are:
+* Vertex AI search to search for solutions for the problems
+* get_dataproc_cluster_list 
+* get_dataproc_cluster_detatils,
+* get_dataproc_job_output,
+
+For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.
