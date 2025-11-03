@@ -1,10 +1,12 @@
 """'dataproc job helper' tool for Spark UI analyzer agent"""
 
 import logging
+
 from google.cloud import dataproc_v1 as dataproc
 from google.cloud import storage
 
 logger = logging.getLogger(__name__)
+
 
 def get_dataproc_job_output(project_id: str, region: str, job_id: str):
     """
@@ -47,20 +49,17 @@ def get_dataproc_job_output(project_id: str, region: str, job_id: str):
         path_parts = output_uri[5:].split("/", 1)
         bucket_name = path_parts[0]
         prefix = ("/").join(path_parts[1].split("/")[:-1])
-        
+
         print(f"Bucket Name: {bucket_name}")
         print(f"Prefix: {prefix}")
 
-
         # Ensure the prefix ends with a '/' to only list files inside the "directory"
-        if not prefix.endswith('/'):
-            prefix += '/'
-
-        bucket = storage_client.bucket(bucket_name)
+        if not prefix.endswith("/"):
+            prefix += "/"
 
         # List all blobs (files) with the correct prefix
         blobs = storage_client.list_blobs(bucket_name, prefix=prefix)
-        
+
         full_output = []
         for blob in blobs:
             # Check if the blob name matches the expected format, e.g., 'driveroutput.000000000'
@@ -73,6 +72,7 @@ def get_dataproc_job_output(project_id: str, region: str, job_id: str):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
+
 
 # --- Example Usage ---
 if __name__ == "__main__":

@@ -17,7 +17,6 @@
 import logging
 
 from google.adk.tools import ToolContext
-
 from shared_libraries import file_utils
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,9 @@ def get_code(file_path: str, artifact_name: str, tool_context: ToolContext) -> d
       A dict with "status" and (optional) "error_message" keys.
     """
 
-    output_filename = file_utils.read_text_file_from_path(file_path, artifact_name, tool_context)
+    output_filename = file_utils.read_text_file_from_path(
+        file_path, artifact_name, tool_context
+    )
 
     logger.info("Saved artifact %s", output_filename)
     return {"status": "ok"}

@@ -18,46 +18,46 @@
 -- first it delegates the request to the sub agent code analyser
 -- then it handles control to screenshot analyser for Spark UI analysis
 """
-import os
-from datetime import date
-from typing import Optional
+
 import logging
+import os
 
-from google.genai import types
-
+from dotenv import load_dotenv
 from google.adk.agents import Agent
-from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools import agent_tool
-from sub_agents.case_matcher import case_matcher
-from vertex_search_agent.agent import vertex_agent
 
-from tools.dataproc_helper import get_dataproc_cluster_list, get_dataproc_cluster_detatils
+from tools.dataproc_helper import (
+    get_dataproc_cluster_detatils,
+    get_dataproc_cluster_list,
+)
 from tools.dataproc_job_helper import get_dataproc_job_output
+from vertex_search_agent.agent import vertex_agent
 
 from . import prompts
 
-from dotenv import load_dotenv
-
 # Environment Loading (as before)
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(dotenv_path=dotenv_path, override=True)
 
 logger = logging.getLogger(__name__)
 print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
 # --- Agent Definition ---
 
-logger.info(f"creating the host agent.")
+logger.info("creating the host agent.")
 root_agent = Agent(
     name="AiCompanionHostAgent",
     model=os.getenv("ROOT_AGENT_MODEL"),  # type: ignore
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
     global_instruction=prompts.GLOBAL_INSTRUCTION,
-    #generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
+    # generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[
-        agent_tool.AgentTool(agent=vertex_agent), get_dataproc_cluster_list, get_dataproc_cluster_detatils,
-        get_dataproc_job_output
+        agent_tool.AgentTool(agent=vertex_agent),
+        # get_dataproc_cluster_list,
+        # get_dataproc_cluster_detatils,
+        # get_dataproc_job_output,
     ],
 )
 logger.info(
-    f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv('ROOT_AGENT_MODEL')}'.")
+    f"ADK Host Agent '{root_agent.name}' created with model '{os.getenv('ROOT_AGENT_MODEL')}'."
+)

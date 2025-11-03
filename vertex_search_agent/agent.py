@@ -1,8 +1,8 @@
+import os
+
+from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.tools import VertexAiSearchTool
-from dotenv import load_dotenv
-
-import os
 
 load_dotenv()
 
@@ -16,5 +16,5 @@ vertex_agent = Agent(
     model="gemini-2.5-flash",
     instruction="Answer questions using Vertex AI Search to find information from internal documents. Always cite sources when available.",
     description="Enterprise document search assistant with Vertex AI Search capabilities",
-    tools=[VertexAiSearchTool(data_store_id=DATASTORE_ID)]
+    tools=[VertexAiSearchTool(data_store_id=DATASTORE_ID)],
 )

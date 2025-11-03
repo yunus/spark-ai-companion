@@ -1,13 +1,9 @@
 import sys
-from typing import Tuple
-import time
 
-from pyspark import RDD
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import split, explode, col, count
-#from helper_modules import explain_dataframe
+from pyspark.sql.functions import count, explode, split
 
-
+# from helper_modules import explain_dataframe
 
 
 if __name__ == "__main__":
@@ -15,10 +11,7 @@ if __name__ == "__main__":
         print("Usage: sort <file>", file=sys.stderr)
         sys.exit(-1)
 
-
-
     with SparkSession.builder.appName("PythonSort").getOrCreate() as spark:
-
         print("------------ reading the file")
         spark.sparkContext.setJobDescription("read file")
         df = spark.read.text(sys.argv[1])
@@ -41,12 +34,14 @@ if __name__ == "__main__":
 
         spark.sparkContext.setJobDescription("show action on top 10 words")
         cached_df_words_sorted.show(10, True)
-        print('Showing Profiles')
+        print("Showing Profiles")
         # spark.sparkContext.show_profiles()
         # print("showed profiles")
 
-        print(f"++++ Number of partitions {cached_df_words_sorted.rdd.getNumPartitions()}")
-        #explain_dataframe.explain_a_dataframe(cached_df_words_sorted)
+        print(
+            f"++++ Number of partitions {cached_df_words_sorted.rdd.getNumPartitions()}"
+        )
+        # explain_dataframe.explain_a_dataframe(cached_df_words_sorted)
 
         spark.sparkContext.setJobDescription("count action on cached words")
         count = cached_df_words_sorted.count()
@@ -55,6 +50,6 @@ if __name__ == "__main__":
         spark.sparkContext.setJobDescription("filter words more than 1000 counts")
         df_words_sorted_filtered = cached_df_words_sorted.filter("count > 1000")
         df_words_sorted_filtered.explain()
-        spark.sparkContext.setJobDescription("countwords more than 1000 occurences")
+        spark.sparkContext.setJobDescription("countwords more than 1000 occurrences")
         count = df_words_sorted_filtered.count()
         print(f"count: {count}")
