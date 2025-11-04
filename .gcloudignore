@@ -1,0 +1,28 @@
+# The .gcloudignore file excludes file from upload to Cloud Build.
+# If this file is deleted, gcloud will default to .gitignore.
+
+.gemini
+GEMINI.md
+deployment/
+.vscode/
+plans/
+terraform/
+terraform_demo/
+terraform_pso_hackathon_companion/
+tests/
+.requirements.txt
+deplyment_metadata.json
+Makefile
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.backup*
+
+
+# Exclude locally installed dependencies
+.venv/
+
+
+# Exclude git history and configuration.
+.git/
+.gitignore
