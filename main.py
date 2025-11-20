@@ -85,6 +85,7 @@ async def start_agent_session(user_id: str, is_audio=True):
         response_modalities=[modality],
         speech_config=speech_config,
         output_audio_transcription=genai_types.AudioTranscriptionConfig(),  # with this, audio responses are transcriped to text additionally.
+        input_audio_transcription=genai_types.AudioTranscriptionConfig(),
         # proactivity=genai_types.ProactivityConfig(proactive_audio=True), -> supported with native audio model. This enables model to ignore messages that are not directed to it.
         # enable_affective_dialog=True, # -> responds to emotional expressions for more nuanced conversations. native-dialog model only
     )
@@ -115,6 +116,38 @@ async def agent_to_client_messaging(websocket, live_events):
                     await websocket.send_text(json.dumps(message))
                     logger.info(f"[AGENT TO CLIENT]: {message}")
                     continue
+
+                # Handle input transcription (User's voice)
+                if hasattr(event, "input_audio_transcription") and event.input_audio_transcription:
+                     transcription = event.input_audio_transcription
+                     if hasattr(transcription, "text"):
+                         transcription_text = transcription.text
+                     else:
+                         transcription_text = str(transcription)
+                     
+                     message = {
+                        "mime_type": "application/input_transcription",
+                        "data": transcription_text,
+                    }
+                     await websocket.send_text(json.dumps(message))
+                     logger.info(f"[AGENT TO CLIENT]: input_transcription: {transcription_text}")
+                     continue
+
+                # Handle output transcription (Model's voice)
+                if hasattr(event, "output_audio_transcription") and event.output_audio_transcription:
+                     transcription = event.output_audio_transcription
+                     if hasattr(transcription, "text"):
+                         transcription_text = transcription.text
+                     else:
+                         transcription_text = str(transcription)
+                     
+                     message = {
+                        "mime_type": "text/plain",
+                        "data": transcription_text,
+                    }
+                     await websocket.send_text(json.dumps(message))
+                     logger.info(f"[AGENT TO CLIENT]: output_transcription: {transcription_text}")
+                     continue
 
                 # Read the Content and its first Part
                 part: Part = (
@@ -150,11 +183,12 @@ async def agent_to_client_messaging(websocket, live_events):
                     logger.info(f"[AGENT TO CLIENT]: tool_use: {part.function_call.name}")
                     continue
 
-                # If it's text and a partial text, send it
-                if part.text and event.partial:
+                # If it's text, send it (this handles output audio transcription too)
+                if part.text:
                     message = {"mime_type": "text/plain", "data": part.text}
                     await websocket.send_text(json.dumps(message))
                     logger.debug(f"[AGENT TO CLIENT]: text/plain: {message}")
+                    continue
         except WebSocketDisconnect:
             logger.info("Agent disconnected from client messaging.")
             break

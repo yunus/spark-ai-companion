@@ -22,6 +22,7 @@ const messageInput = document.getElementById("message");
 //const messagesDiv = document.getElementById("messages");
 const sendButton = document.getElementById("sendButton");
 let currentMessageId = null;
+let currentUserSpeechId = null;
 
 // Initialize MediaHandler
 const mediaHandler = new MediaHandler();
@@ -135,17 +136,56 @@ function connectWebsocket() {
 
     // If it's audio, play it
     if (message_from_server.mime_type == "audio/pcm" && audioPlayerNode) {
+      currentUserSpeechId = null;
       audioPlayerNode.port.postMessage(base64ToArray(message_from_server.data));
       resetInactivityTimer(); // Reset timer when receiving audio from server
     }
 
     // If it's tool use, show it
     if (message_from_server.mime_type == "application/tool_use") {
+        currentUserSpeechId = null;
         addMessage(`🛠️ Using tool: ${message_from_server.tool_name}`, 'bot');
+    }
+
+    // If it's input transcription, show it as user message
+    if (message_from_server.mime_type == "application/input_transcription") {
+        if (currentUserSpeechId == null) {
+            currentUserSpeechId = Math.random().toString(36).substring(7);
+        }
+        // We replace the content instead of appending for transcription updates usually?
+        // If the API sends accumulated text, we replace. If it sends chunks, we append.
+        // Gemini Live API usually sends accumulated text for the current turn in `input_audio_transcription`.
+        // So we should probably overwrite the text in the bubble, or `addMessage` appends?
+        // `addMessage` appends: `pDiv.textContent = previousText + text;`
+        // We need a way to overwrite.
+        // Let's modify `addMessage` or just manually handle it here?
+        // `addMessage` is designed for appending chunks.
+        // If `input_transcription` is the FULL text so far, we need to overwrite.
+        // Let's assume it IS the full text so far (common for speech APIs).
+        // If so, we need to clear previous text?
+        // Actually, let's check `addMessage` implementation.
+        // It gets `previousText`.
+        // If I want to overwrite, I should pass the difference? No, that's hard.
+        // I'll just modify the DOM directly for transcription or modify `addMessage`.
+        // Let's modify `addMessage` to support `overwrite` flag?
+        // Or just handle it here.
+        
+        let pDivId = "pDiv" + currentUserSpeechId;
+        let pDiv = document.getElementById(pDivId);
+        if (!pDiv) {
+             addMessage(message_from_server.data, 'user', currentUserSpeechId);
+        } else {
+             pDiv.textContent = message_from_server.data;
+             const messagesContainer = document.getElementById('messages-container');
+             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     }
 
     // If it's a text, print it
     if (message_from_server.mime_type == "text/plain") {
+      // Reset user speech ID as bot is responding
+      currentUserSpeechId = null;
+
       // Reset timer when receiving text from server
       resetInactivityTimer();
 
