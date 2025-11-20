@@ -11,7 +11,7 @@ import { MediaHandler } from "./media-handler.js";
 
 // Connect the server with a WebSocket connection
 const sessionId = Math.random().toString().substring(10);
-const ws_url = "ws://" + window.location.host + "/ws/" + sessionId;
+const ws_url = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws/" + sessionId;
 let websocket = null;
 let is_audio = true;
 let is_screen = false;
@@ -99,6 +99,12 @@ function connectWebsocket() {
     // Enable the Send button
     document.getElementById("sendButton").disabled = false;
     addSubmitHandler();
+
+    // Auto-start audio
+    startAudio();
+    is_audio = true;
+    audioButton.classList.add('active');
+    resetInactivityTimer();
   };
 
   // Handle incoming messages
@@ -131,6 +137,11 @@ function connectWebsocket() {
     if (message_from_server.mime_type == "audio/pcm" && audioPlayerNode) {
       audioPlayerNode.port.postMessage(base64ToArray(message_from_server.data));
       resetInactivityTimer(); // Reset timer when receiving audio from server
+    }
+
+    // If it's tool use, show it
+    if (message_from_server.mime_type == "application/tool_use") {
+        addMessage(`🛠️ Using tool: ${message_from_server.tool_name}`, 'bot');
     }
 
     // If it's a text, print it
@@ -212,7 +223,7 @@ function addSubmitHandler() {
       }
       // Auto-resize the textarea
       messageInput.style.height = 'auto';
-      messageInput.style.height = chatInput.scrollHeight + 'px';
+      messageInput.style.height = messageInput.scrollHeight + 'px';
   });
 }
 
@@ -292,15 +303,15 @@ function resetInactivityTimer() {
   if (is_audio || is_screen) {
     inactivityTimer = setTimeout(() => {
       console.log("Inactivity timeout!!");
-      if (is_audio) {
-        stopAudio();
-        const buttonText = audioButton.querySelector('span:not(.material-icons)');
-        // buttonText.textContent = "Start Audio";
-        audioButton.classList.remove('active');
-        is_audio = false;
-        // websocket.close();
-        // connectWebsocket();
-      }
+      // if (is_audio) {
+      //   stopAudio();
+      //   const buttonText = audioButton.querySelector('span:not(.material-icons)');
+      //   // buttonText.textContent = "Start Audio";
+      //   audioButton.classList.remove('active');
+      //   is_audio = false;
+      //   // websocket.close();
+      //   // connectWebsocket();
+      // }
       if (is_screen) {
         stopScreenShare();
       }
@@ -367,16 +378,18 @@ audioButton.addEventListener("click", () => {
     audioButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
   } else {
-    stopAudio();
-    is_audio = false;
-    // websocket.close(); // close current connection
-    // connectWebsocket(); // reconnect without audio mode
-    //buttonText.textContent = "Start Audio";
-    audioButton.classList.remove('active');
-    if (inactivityTimer) {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = null;
-    }
+    // User requested to never disable audio
+    console.log("Audio stop disabled by user request");
+    // stopAudio();
+    // is_audio = false;
+    // // websocket.close(); // close current connection
+    // // connectWebsocket(); // reconnect without audio mode
+    // //buttonText.textContent = "Start Audio";
+    // audioButton.classList.remove('active');
+    // if (inactivityTimer) {
+    //   clearTimeout(inactivityTimer);
+    //   inactivityTimer = null;
+    // }
   }
 });
 
@@ -418,6 +431,14 @@ async function startScreenShare() {
     // websocket.close(); // close current connection
     // connectWebsocket(); // reconnect with screen sharing mode
 
+    sendMessage({
+      mime_type: "application/json",
+      data: JSON.stringify({
+        event: "screen_sharing",
+        status: "on"
+      })
+    });
+
     // Start capturing frames
     mediaHandler.startFrameCapture((base64Image) => {
       // Screen sharing is not counted as activity
@@ -439,6 +460,14 @@ function stopScreenShare() {
   screenButton.classList.remove('active');
   is_screen = false;
   sharingScreen = false;
+
+  sendMessage({
+    mime_type: "application/json",
+    data: JSON.stringify({
+      event: "screen_sharing",
+      status: "off"
+    })
+  });
   // websocket.close(); // close current connection
   // connectWebsocket(); // reconnect without screen sharing mode
 }

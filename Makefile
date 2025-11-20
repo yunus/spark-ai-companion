@@ -41,20 +41,21 @@ build-container: configure-docker
 			--tag us-central1-docker.pkg.dev/co-browsing-agent-1463/containers/ai-companion:latest .
 			--project=co-browsing-agent-1463
 
-_give-iam-to-cloud-iap:
-	gcloud run services add-iam-policy-binding ai-companion \
-		--region=us-central1 \
-		--member=serviceAccount:service-717802037695@gcp-sa-iap.iam.gserviceaccount.com \
-		--role=roles/run.invoker
 
-give-domain-access-to-cloud-iap: _give-iam-to-cloud-iap
-	gcloud beta iap web add-iam-policy-binding \
-		--member=domain:google.com \
-		--role=roles/iap.httpsResourceAccessor \
-		--region=us-central1 \
-		--resource-type=cloud-run \
-		--service=ai-companion \
-		--project=co-browsing-agent-1463
+# _give-iam-to-cloud-iap:
+# 	gcloud run services add-iam-policy-binding ai-companion \
+# 		--region=us-central1 \
+# 		--member=serviceAccount:service-439592077391@gcp-sa-iap.iam.gserviceaccount.com \
+# 		--role=roles/run.invoker
+
+# give-domain-access-to-cloud-iap: _give-iam-to-cloud-iap
+# 	gcloud beta iap web add-iam-policy-binding \
+# 		--member=domain:google.com \
+# 		--role=roles/iap.httpsResourceAccessor \
+# 		--region=us-central1 \
+# 		--resource-type=cloud-run \
+# 		--service=ai-companion \
+# 		--project=co-browsing-agent-1463
 
 
 deploy-cloud-run: 
@@ -62,15 +63,15 @@ deploy-cloud-run:
 			ai-companion \
 			--region=us-central1 \
 			--service-account sa-project@co-browsing-agent-1463.iam.gserviceaccount.com \
-			--no-allow-unauthenticated \
-			--iap \
+			--env-vars-file="production.env" \
+			--allow-unauthenticated \
+			--ingress internal-and-cloud-load-balancing \
+			--no-iap \
 			--timeout 60m \
 			--session-affinity \
 			--cpu 4 \
 			--memory 8Gi \
 			--image us-central1-docker.pkg.dev/co-browsing-agent-1463/containers/ai-companion:latest
-
-
 
 # ==============================================================================
 # Infrastructure Setup

@@ -26,6 +26,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from google.adk.agents.live_request_queue import LiveRequestQueue
 from google.adk.agents.run_config import RunConfig
+from google.adk.events import Event, EventActions
 from google.adk.runners import InMemoryRunner
 from google.genai import types as genai_types
 
@@ -97,7 +98,7 @@ async def start_agent_session(user_id: str, is_audio=True):
         live_request_queue=live_request_queue,
         run_config=run_config,
     )
-    return live_events, live_request_queue
+    return live_events, live_request_queue, runner, session
 
 
 async def agent_to_client_messaging(websocket, live_events):
@@ -139,6 +140,16 @@ async def agent_to_client_messaging(websocket, live_events):
                         )
                         continue
 
+                # If it's a function call, send it
+                if part.function_call:
+                    message = {
+                        "mime_type": "application/tool_use",
+                        "tool_name": part.function_call.name,
+                    }
+                    await websocket.send_text(json.dumps(message))
+                    logger.info(f"[AGENT TO CLIENT]: tool_use: {part.function_call.name}")
+                    continue
+
                 # If it's text and a partial text, send it
                 if part.text and event.partial:
                     message = {"mime_type": "text/plain", "data": part.text}
@@ -149,7 +160,7 @@ async def agent_to_client_messaging(websocket, live_events):
             break
 
 
-async def client_to_agent_messaging(websocket, live_request_queue):
+async def client_to_agent_messaging(websocket, live_request_queue, runner, session):
     """Client to agent communication"""
     while True:
         try:
@@ -174,6 +185,18 @@ async def client_to_agent_messaging(websocket, live_request_queue):
                 logger.debug(
                     f"[CLIENT TO AGENT]: {mime_type}: {len(decoded_data)} bytes"
                 )
+            elif mime_type == "application/json":
+                message_data = json.loads(data)
+                if message_data.get("event") == "screen_sharing":
+                    status = message_data.get("status")
+                    logger.info(f"Received screen sharing status: {status}")
+                    state_delta = {"screen_sharing": status}
+                    event = Event(
+                        author="user", actions=EventActions(state_delta=state_delta)
+                    )
+                    await runner.session_service.append_event(
+                        session=session, event=event
+                    )
             else:
                 raise ValueError(f"Mime type not supported: {mime_type}")
         except WebSocketDisconnect:
@@ -223,7 +246,7 @@ async def websocket_endpoint(
         logger.info(f"Client #{user_id} connected, audio mode: {is_audio}")
 
         # Start agent session
-        live_events, live_request_queue = await start_agent_session(
+        live_events, live_request_queue, runner, session = await start_agent_session(
             str(user_id), is_audio.lower() == "true"
         )
         # Start tasks
@@ -231,7 +254,7 @@ async def websocket_endpoint(
             agent_to_client_messaging(websocket, live_events)
         )
         client_to_agent_task = asyncio.create_task(
-            client_to_agent_messaging(websocket, live_request_queue)
+            client_to_agent_messaging(websocket, live_request_queue, runner, session)
         )
 
         # Wait until the websocket is disconnected or an error occurs

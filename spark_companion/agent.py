@@ -25,6 +25,7 @@ import os
 from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.tools import agent_tool
+from google.adk.tools import google_search
 
 from tools.dataproc_helper import (
     get_dataproc_cluster_detatils,
@@ -43,16 +44,25 @@ logger = logging.getLogger(__name__)
 print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
 # --- Agent Definition ---
 
+search_agent = Agent(
+    model='gemini-2.5-pro',
+    name='GoogleSearchAgent',
+    instruction="""
+    You're a specialist in Google Search. You can search the web and return the results.
+    """,
+    tools=[google_search],
+)
+
 logger.info("creating the host agent.")
 root_agent = Agent(
     name="AiCompanionHostAgent",
     model=os.getenv("ROOT_AGENT_MODEL"),  # type: ignore
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
-    global_instruction=prompts.GLOBAL_INSTRUCTION,
     # generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[
         agent_tool.AgentTool(agent=vertex_agent),
+        agent_tool.AgentTool(agent=search_agent),
         # get_dataproc_cluster_list,
         # get_dataproc_cluster_detatils,
         # get_dataproc_job_output,
