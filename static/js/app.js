@@ -102,10 +102,10 @@ function connectWebsocket() {
     addSubmitHandler();
 
     // Auto-start audio
-    startAudio();
-    is_audio = true;
-    audioButton.classList.add('active');
-    resetInactivityTimer();
+    // startAudio();
+    // is_audio = true;
+    // audioButton.classList.add('active');
+    // resetInactivityTimer();
   };
 
   // Handle incoming messages
@@ -418,18 +418,18 @@ audioButton.addEventListener("click", () => {
     audioButton.classList.add('active');
     resetInactivityTimer(); // Start inactivity timer
   } else {
-    // User requested to never disable audio
-    console.log("Audio stop disabled by user request");
-    // stopAudio();
-    // is_audio = false;
-    // // websocket.close(); // close current connection
-    // // connectWebsocket(); // reconnect without audio mode
-    // //buttonText.textContent = "Start Audio";
-    // audioButton.classList.remove('active');
-    // if (inactivityTimer) {
-    //   clearTimeout(inactivityTimer);
-    //   inactivityTimer = null;
-    // }
+    // User requested to disable audio (toggle off)
+    console.log("Audio stop requested by user");
+    stopAudio();
+    is_audio = false;
+    // websocket.close(); // close current connection
+    // connectWebsocket(); // reconnect without audio mode
+    //buttonText.textContent = "Start Audio";
+    audioButton.classList.remove('active');
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = null;
+    }
   }
 });
 

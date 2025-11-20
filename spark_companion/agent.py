@@ -45,7 +45,7 @@ print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
 # --- Agent Definition ---
 
 search_agent = Agent(
-    model='gemini-2.5-pro',
+    model='gemini-2.5-flash',
     name='GoogleSearchAgent',
     instruction="""
     You're a specialist in Google Search. You can search the web and return the results.
