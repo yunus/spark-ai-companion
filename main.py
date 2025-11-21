@@ -118,8 +118,8 @@ async def agent_to_client_messaging(websocket, live_events):
                     continue
 
                 # Handle input transcription (User's voice)
-                if hasattr(event, "input_audio_transcription") and event.input_audio_transcription:
-                     transcription = event.input_audio_transcription
+                if hasattr(event, "input_transcription") and event.input_transcription:
+                     transcription = event.input_transcription
                      if hasattr(transcription, "text"):
                          transcription_text = transcription.text
                      else:
@@ -130,12 +130,12 @@ async def agent_to_client_messaging(websocket, live_events):
                         "data": transcription_text,
                     }
                      await websocket.send_text(json.dumps(message))
-                     logger.info(f"[AGENT TO CLIENT]: input_transcription: {transcription_text}")
+                     logger.debug(f"[AGENT TO CLIENT]: input_transcription: {transcription_text}")
                      continue
 
                 # Handle output transcription (Model's voice)
-                if hasattr(event, "output_audio_transcription") and event.output_audio_transcription:
-                     transcription = event.output_audio_transcription
+                if hasattr(event, "output_transcription") and event.output_transcription:
+                     transcription = event.output_transcription
                      if hasattr(transcription, "text"):
                          transcription_text = transcription.text
                      else:
@@ -146,7 +146,7 @@ async def agent_to_client_messaging(websocket, live_events):
                         "data": transcription_text,
                     }
                      await websocket.send_text(json.dumps(message))
-                     logger.info(f"[AGENT TO CLIENT]: output_transcription: {transcription_text}")
+                     logger.debug(f"[AGENT TO CLIENT]: output_transcription: {transcription_text}")
                      continue
 
                 # Read the Content and its first Part
