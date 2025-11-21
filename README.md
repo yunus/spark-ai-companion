@@ -40,20 +40,31 @@ make playground-full-ui
 # navigate in your browser to localhost:8000
 ```
 
+```sh
+# Create a docker image with cloud build
+make build-container
+# deploy to cloud run
+make deploy-cloud-run
+```
+
+
 ## Adding new cases
 
-To make it easier to add new cases, we have created a [Google sheet](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) where you can add more.
-The sheet is loaded to a BigQuery external table and then into a native table, since vertex Search supports only native tables.
+The cases are served from Vertex AI Search. To make it easier to add new cases, we have created a [Google sheet](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) where you can add more.
+Vertex AI Search doesn't support Google sheet directly. We load the sheet into a BigQuery external table and then into a native table, since vertex Search supports only native tables.
 
 After loading to the native table, you should also update the Vertex AI Search to re-index the data. That also happens nightly but you can manually trigger it.
 
+![knowledge_base.png](knowledge_base.png)
+
 # Architecture
 
-The architectre is straight forward, there is a central AI agent which can use tools to help you troubleshoot your applications.
+The architectre is straight forward, there is a central AI agent that uses Gemini Live which can use tools to help you troubleshoot your applications.
 Current tooling are:
 * Vertex AI search to search for solutions for the problems
-* get_dataproc_cluster_list 
-* get_dataproc_cluster_detatils,
-* get_dataproc_job_output,
+* Google Search to search for solutions when vertex AI search doesn't have answers listed
+* get_dataproc_cluster_list (disabled in demo since service account doesn't have access to end user environment), 
+* get_dataproc_cluster_detatils (disabled in demo since service account doesn't have access to end user environment),
+* get_dataproc_job_output (disabled in demo since service account doesn't have access to end user environment),
 
 For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.

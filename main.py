@@ -119,35 +119,42 @@ async def agent_to_client_messaging(websocket, live_events):
 
                 # Handle input transcription (User's voice)
                 if hasattr(event, "input_transcription") and event.input_transcription:
-                     transcription = event.input_transcription
-                     if hasattr(transcription, "text"):
-                         transcription_text = transcription.text
-                     else:
-                         transcription_text = str(transcription)
-                     
-                     message = {
+                    transcription = event.input_transcription
+                    if hasattr(transcription, "text"):
+                        transcription_text = transcription.text
+                    else:
+                        transcription_text = str(transcription)
+
+                    message = {
                         "mime_type": "application/input_transcription",
                         "data": transcription_text,
                     }
-                     await websocket.send_text(json.dumps(message))
-                     logger.debug(f"[AGENT TO CLIENT]: input_transcription: {transcription_text}")
-                     continue
+                    await websocket.send_text(json.dumps(message))
+                    logger.debug(
+                        f"[AGENT TO CLIENT]: input_transcription: {transcription_text}"
+                    )
+                    continue
 
                 # Handle output transcription (Model's voice)
-                if hasattr(event, "output_transcription") and event.output_transcription:
-                     transcription = event.output_transcription
-                     if hasattr(transcription, "text"):
-                         transcription_text = transcription.text
-                     else:
-                         transcription_text = str(transcription)
-                     
-                     message = {
+                if (
+                    hasattr(event, "output_transcription")
+                    and event.output_transcription
+                ):
+                    transcription = event.output_transcription
+                    if hasattr(transcription, "text"):
+                        transcription_text = transcription.text
+                    else:
+                        transcription_text = str(transcription)
+
+                    message = {
                         "mime_type": "text/plain",
                         "data": transcription_text,
                     }
-                     await websocket.send_text(json.dumps(message))
-                     logger.debug(f"[AGENT TO CLIENT]: output_transcription: {transcription_text}")
-                     continue
+                    await websocket.send_text(json.dumps(message))
+                    logger.debug(
+                        f"[AGENT TO CLIENT]: output_transcription: {transcription_text}"
+                    )
+                    continue
 
                 # Read the Content and its first Part
                 part: Part = (
@@ -180,7 +187,9 @@ async def agent_to_client_messaging(websocket, live_events):
                         "tool_name": part.function_call.name,
                     }
                     await websocket.send_text(json.dumps(message))
-                    logger.info(f"[AGENT TO CLIENT]: tool_use: {part.function_call.name}")
+                    logger.info(
+                        f"[AGENT TO CLIENT]: tool_use: {part.function_call.name}"
+                    )
                     continue
 
                 # If it's text, send it (this handles output audio transcription too)

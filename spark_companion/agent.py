@@ -24,15 +24,7 @@ import os
 
 from dotenv import load_dotenv
 from google.adk.agents import Agent
-from google.adk.tools import agent_tool
-from google.adk.tools import google_search
-
-from tools.dataproc_helper import (
-    get_dataproc_cluster_detatils,
-    get_dataproc_cluster_list,
-)
-from tools.dataproc_job_helper import get_dataproc_job_output
-from vertex_search_agent.agent import vertex_agent
+from google.adk.tools import VertexAiSearchTool, agent_tool, google_search
 
 from . import prompts
 
@@ -45,12 +37,19 @@ print(f"ROOT_AGENT_MODEL: {os.getenv('ROOT_AGENT_MODEL')}")
 # --- Agent Definition ---
 
 search_agent = Agent(
-    model='gemini-2.5-flash',
-    name='GoogleSearchAgent',
-    instruction="""
-    You're a specialist in Google Search. You can search the web and return the results.
-    """,
+    model="gemini-2.5-flash",
+    name="google_search_agent",
+    instruction="You're a specialist in Google Search. You can search the web and return the results.",
+    description="General internet search assistant when troubleshooting with vertex_search_agent doesn't find a solution",
     tools=[google_search],
+)
+
+vertex_agent = Agent(
+    name="vertex_search_agent",
+    model="gemini-2.5-flash",
+    instruction="Answer questions using Vertex AI Search to find information from internal documents. Always cite sources when available.",
+    description="Search assistant for troubleshooting steps provided by experts",
+    tools=[VertexAiSearchTool(data_store_id=os.getenv("VERTEX_AI_SEARCH_DATASTORE"))],
 )
 
 logger.info("creating the host agent.")
@@ -59,13 +58,9 @@ root_agent = Agent(
     model=os.getenv("ROOT_AGENT_MODEL"),  # type: ignore
     description="User-facing ai companion root agent. It delegates the requests to tools and other specialised agents",
     instruction=prompts.ROOT_AGENT_INSTRUCTION,
-    # generate_content_config=types.GenerateContentConfig(response_modalities=["AUDIO"]),
     tools=[
         agent_tool.AgentTool(agent=vertex_agent),
         agent_tool.AgentTool(agent=search_agent),
-        # get_dataproc_cluster_list,
-        # get_dataproc_cluster_detatils,
-        # get_dataproc_job_output,
     ],
 )
 logger.info(

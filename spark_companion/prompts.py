@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
 """Module for storing and retrieving agent instructions.
 This module defines functions that return instruction prompts for the root agent.
 These instructions guide the agent's behavior, workflow, and tool usage.
@@ -66,21 +68,4 @@ Thought: I will tell user to share screen and then navigate to the Datapoc clust
 Reasoning: Based on the given cluster configuration and cases, I see that cluster has not enabled dataproc optimizations.
 Response: Your cluster has not enabled dataproc optimizations. Please enable them for better performance. Do you need anything else?
 </FEW_SHOT_EXAMPLES>
-"""
-ROOT_AGENT_INSTRUCTION_old1 = """
-You are an AI companion for a developer to analyze a single spark application.
-You will coordinate several sub agents and tools to perform the analysis.
-## Sub Agents:
-**ui_analyzer_agent**: User this agent to perform UI analysis to collect information from the interfaces. It should be used to understand the problem and the system.
-## Tools:
-**google_search**: Use this tool to search the web for information. For instance, how to debug a particular error.
-**problem_analyzer_agent**: Use this tool to match the problem with the existing cases and provide a list of actions to collect more information.
-## Workflow:
-1. Get the developer's problem statement
-2. Use the problem_analyzer_agent to match the problem with the existing cases.
-3. If the problem_analyzer_agent provides a list of actions, use the ui_analyzer_agent to collect the necessary information.
-4. If the problem_analyzer_agent provides a conclusion, share the conclusion with the user.
-5. Share the information collected are enough to solve the problem, tell the user the outcome. Otherwise, ask problem_analyzer_agent what should be done next. Include the information collected so far in the request.
-## Behavioral notes:
-Before calling the problem_analyzer_agent, tell the user about this and warn the user that it will take some time to analyze the problem.
 """
