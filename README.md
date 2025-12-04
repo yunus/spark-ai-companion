@@ -50,7 +50,7 @@ make deploy-cloud-run
 
 ## Adding new cases
 
-The cases are served from Vertex AI Search. To make it easier to add new cases, we have created a [Google sheet](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) where you can add more.
+The cases are served from Vertex AI Search. To make it easier to add new cases, we have created a Google sheet where you can add more.
 Vertex AI Search doesn't support Google sheet directly. We load the sheet into a BigQuery external table and then into a native table, since vertex Search supports only native tables.
 
 After loading to the native table, you should also update the Vertex AI Search to re-index the data. That also happens nightly but you can manually trigger it.
@@ -68,3 +68,5 @@ Current tooling are:
 * get_dataproc_job_output (disabled in demo since service account doesn't have access to end user environment),
 
 For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.
+
+~![architecture](architecture.png)
