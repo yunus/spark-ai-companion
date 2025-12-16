@@ -41,7 +41,26 @@ build-container: configure-docker
 			--tag us-central1-docker.pkg.dev/co-browsing-agent-1463/containers/ai-companion:latest .
 			--project=co-browsing-agent-1463
 
+deploy-cloud-run: 
+		gcloud beta run deploy \
+			ai-companion \
+			--region=us-central1 \
+			--service-account sa-project@co-browsing-agent-1463.iam.gserviceaccount.com \
+			--env-vars-file="production.env" \
+			--allow-unauthenticated \
+			--ingress internal-and-cloud-load-balancing \
+			--no-iap \
+			--timeout 60m \
+			--session-affinity \
+			--cpu 4 \
+			--memory 8Gi \
+			--min-instances 1 \
+			--max-instances 10 \
+			--image us-central1-docker.pkg.dev/co-browsing-agent-1463/containers/ai-companion:latest
 
+# ==============================================================================
+# Cloud IAP Permissions
+# ==============================================================================
 # _give-iam-to-cloud-iap:
 # 	gcloud run services add-iam-policy-binding ai-companion \
 # 		--region=us-central1 \
@@ -56,31 +75,6 @@ build-container: configure-docker
 # 		--resource-type=cloud-run \
 # 		--service=ai-companion \
 # 		--project=co-browsing-agent-1463
-
-
-deploy-cloud-run: 
-		gcloud beta run deploy \
-			ai-companion \
-			--region=us-central1 \
-			--service-account sa-project@co-browsing-agent-1463.iam.gserviceaccount.com \
-			--env-vars-file="production.env" \
-			--allow-unauthenticated \
-			--ingress internal-and-cloud-load-balancing \
-			--no-iap \
-			--timeout 60m \
-			--session-affinity \
-			--cpu 4 \
-			--memory 8Gi \
-			--image us-central1-docker.pkg.dev/co-browsing-agent-1463/containers/ai-companion:latest
-
-# ==============================================================================
-# Infrastructure Setup
-# ==============================================================================
-
-# Set up development environment resources using Terraform
-# setup-dev-env:
-# 	PROJECT_ID=$$(gcloud config get-value project) && \
-# 	(cd deployment/terraform/dev && terraform init && terraform apply --var-file vars/env.tfvars --var dev_project_id=$$PROJECT_ID --auto-approve)
 
 # ==============================================================================
 # Testing & Code Quality
