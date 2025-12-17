@@ -59,7 +59,7 @@ Vertex AI Search doesn't support Google sheet directly. We load the sheet into a
 
 After loading to the native table, you should also update the Vertex AI Search to re-index the data. That also happens nightly but you can manually trigger it.
 
-![knowledge_base.png](knowledge_base.png)
+<img src="knowledge_base.png" alt="Knowledge Base" width="480">
 
 # Architecture
 
@@ -73,7 +73,7 @@ Current tooling are:
 
 For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.
 
-<img src="architecture.png" alt="Architecture" width="720" height="540">
+<img src="architecture.png" alt="Architecture" width="480">
 
 # How to Demo (For Googlers)
 The demo application is live in [demos](https://cloud-demo-hub.corp.google.com/demo/1463) page.
