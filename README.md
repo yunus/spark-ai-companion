@@ -11,9 +11,8 @@ In this demo, we defined some troubleshoot cases for Google Cloud Dataproc. We l
 When the end user asks about a problem, AI agent searches among the problems and guide the user to the solution.
 If you want to adjust the application for your own use case, you need to replace the knowledge base.
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=kRxFzM_UUU8" target="_blank"><img src="http://img.youtube.com/vi/kRxFzM_UUU8/3.jpg" 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=kRxFzM_UUU8" target="_blank"><img src="http://img.youtube.com/vi/kRxFzM_UUU8/0.jpg" 
 alt="See gemini live in action" width="240" height="180" border="10" /></a>
-
 
 
 ## Learnings with initial tests
