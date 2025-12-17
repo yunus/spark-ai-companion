@@ -73,7 +73,7 @@ Current tooling are:
 
 For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.
 
-~![architecture](architecture.png)
+<img src="architecture.png" alt="Architecture" width="720" height="540">
 
 # How to Demo (For Googlers)
 The demo application is live in [demos](https://cloud-demo-hub.corp.google.com/demo/1463) page.
