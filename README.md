@@ -11,6 +11,11 @@ In this demo, we defined some troubleshoot cases for Google Cloud Dataproc. We l
 When the end user asks about a problem, AI agent searches among the problems and guide the user to the solution.
 If you want to adjust the application for your own use case, you need to replace the knowledge base.
 
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=kRxFzM_UUU8" target="_blank"><img src="http://img.youtube.com/vi/kRxFzM_UUU8/3.jpg" 
+alt="See gemini live in action" width="240" height="180" border="10" /></a>
+
+
+
 ## Learnings with initial tests
 **Should I train with UI:** Since Google Cloud UI is public and there are many examples online, we never had to give any prompts for the UI. 
 Even if there are new features added to the UI, AI reads the page really fast. So by just providing some prompts like first go to tab X and then click link etc., 
@@ -70,3 +75,12 @@ Current tooling are:
 For the Dataproc related tooling, you need to give IAM rights to the service account of the AI agent.
 
 ~![architecture](architecture.png)
+
+# How to Demo (For Googlers)
+The demo application is live in [demos](https://cloud-demo-hub.corp.google.com/demo/1463) page.
+Current [instructions](https://docs.google.com/spreadsheets/d/1y3ZBCgio05DUl--Vd_z-ORiv3JyVp_8gxTYPVBYqGOo/edit?gid=0#gid=0) for the AI agent is to debug a Dataproc Spark and Composer. Reach out to us to add new cases. It is super easy to add new instructions.
+
+**Finding logs:** A case that we see in many customers is that it is confusing to find the executor logs of Spark Jobs. While you can see the driver log jobs in the Dataproc Jobs UI, executor logs are in Cloud Logging. AI agent guides the user to find the logs.
+Ask the AI agent where to find Dataproc Spark executor logs, then it takes you to Cloud logging. If you already have a job with logs, then it is better. It shows you which fields to filter to find the logs.
+
+**Finding Dataproc Spark UI:** Spark UI is the best interface to debug an application. Many users are not aware of its existence and they don't know where to find it. AI agent can help them to figure that out. Ask the AI agent where to find the Spark UI and it will guide you to it.
