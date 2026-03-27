@@ -9,7 +9,7 @@ authors = [
     {name = "Ievgenii Siroshtan", email = "isiroshtan@google.com"},
 ]
 dependencies = [
-    "google-adk>=1.15.0,<2.0.0",
+    "google-adk>=1.28.0,<2.0.0",
     "opentelemetry-exporter-gcp-trace>=1.9.0,<2.0.0",
     "google-cloud-logging>=3.12.0,<4.0.0",
     "google-cloud-aiplatform[agent-engines]>=1.118.0,<2.0.0",
@@ -17,6 +17,10 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "google-cloud-dataproc>=5.21.0,<6.0.0"
 ]
+
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
 
 requires-python = ">=3.11,<3.13"
 

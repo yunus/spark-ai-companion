@@ -1,6 +1,6 @@
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6;
+    background-color: #1a1a1a;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,15 +13,15 @@ body {
     height: 90vh;
     display: flex;
     flex-direction: column;
-    background-color: #ffffff;
+    background-color: #2d2d2d;
     border-radius: 1.5rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     margin: 10px 10px 10px 10px;
 }
 
 .chat-header {
-    background-color: #4f46e5;
+    background-color: #1a1a1a;
     color: white;
     padding: 1rem;
     text-align: center;
@@ -47,15 +47,15 @@ body {
 }
 
 .user-message {
-    background-color: #e0e7ff;
-    color: #1e40af;
+    background-color: #4a4a4a;
+    color: #ffffff;
     align-self: flex-end;
     border-bottom-right-radius: 0.5rem;
 }
 
 .bot-message {
-    background-color: #f3f4f6;
-    color: #1f2937;
+    background-color: #3a3a3a;
+    color: #e0e0e0;
     align-self: flex-start;
     border-bottom-left-radius: 0.5rem;
 }
